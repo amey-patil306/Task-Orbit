@@ -54,6 +54,28 @@ function SessionList({ sessions }) {
   )
 }
 
+/** Model B: where the AI planned more (or less) time than the student estimated. */
+function AiAdjusted({ result }) {
+  if (!result?.adjusted?.length) return null
+  return (
+    <div className="card border-indigo-200">
+      <h2 className="font-semibold text-indigo-900">AI adjusted your estimates</h2>
+      <p className="mt-1 text-sm text-slate-500">Based on how long similar tasks really took you and your classmates.</p>
+      <ul className="mt-2 space-y-1 text-sm">
+        {result.adjusted.map((a) => (
+          <li key={a.task_id} className="flex justify-between gap-2">
+            <span className="truncate">{a.title}</span>
+            <span className="shrink-0 tabular-nums">
+              <span className="text-slate-400 line-through">{a.your_estimate} h</span>{' '}
+              <span className="font-medium text-indigo-700">{a.ml_estimate} h</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 function Unscheduled({ result }) {
   if (!result) return null
   if (result.unscheduled.length === 0) {
@@ -111,10 +133,12 @@ export default function PlannerPage() {
         </div>
         <aside className="space-y-4">
           <Unscheduled result={generate.data} />
+          <AiAdjusted result={generate.data} />
           <div className="card text-sm text-slate-600">
             <h2 className="font-semibold text-slate-900">How the plan is made</h2>
             <p className="mt-2">Tasks are placed in deadline order, on the earliest days with free time, at most 3 h of one task per day.</p>
             <p className="mt-2">When deadlines tie, a priority score (priority, difficulty, urgency, exam or not) decides who goes first.</p>
+            <p className="mt-2">Session lengths use the AI time estimate (how long tasks really take you), not just your guess.</p>
             <p className="mt-2">Ticked sessions count as done when you regenerate.</p>
           </div>
         </aside>

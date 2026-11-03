@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify
 from ..extensions import db
 from ..models import CheckIn, Classroom, Enrollment, ExtensionRequest, Task
 from ..schemas.classroom import CheckInIn, ExtensionIn, JoinIn
-from ..services.analytics import class_average_hours, extension_evidence
+from ..services.analytics import class_average_hours, extension_evidence, ml_estimates
 from ..services.class_service import give_open_assignments
 from ..utils.dates import local_today, utcnow
 from ..utils.errors import ApiError, not_found
@@ -69,7 +69,9 @@ def _teacher_task(task_id: int) -> Task:
 def task_insight(task_id: int):
     """'Classmates took 6.5 h on average' hint for teacher tasks."""
     task = _teacher_task(task_id)
-    return jsonify({"expected_hours": task.assignment.expected_hours, **class_average_hours(task.assignment_id)})
+    done = db.session.scalars(db.select(Task).where(Task.user_id == task.user_id, Task.status == "done")).all()
+    return jsonify({"expected_hours": task.assignment.expected_hours, **class_average_hours(task.assignment_id),
+                    "ml_estimate_hours": ml_estimates([task], done).get(task.id)})
 
 
 @bp.post("/tasks/<int:task_id>/extension")

@@ -21,6 +21,21 @@ def open_tasks(user_id: int):
     return db.session.scalars(db.select(Task).where(Task.user_id == user_id, Task.status != "done")).all()
 
 
+def speed_ratio_for(user_id: int) -> float:
+    """The student's actual / estimated hours so far (an ML feature; 1.0 for new students)."""
+    from ml.features import user_speed_ratio  # noqa: PLC0415
+
+    done = db.session.scalars(db.select(Task).where(Task.user_id == user_id, Task.status == "done")).all()
+    return user_speed_ratio(done)
+
+
+def class_ratio_for(tasks) -> dict:
+    """{assignment_id: classmates' actual / expected hours so far} - the class_ratio_7d feature's input."""
+    from ..services.analytics import class_ratios  # noqa: PLC0415
+
+    return {aid: ratio for aid, (ratio, _n) in class_ratios([t.assignment_id for t in tasks if t.assignment_id]).items()}
+
+
 def _parse_date(name: str, default: date) -> date:
     value = request.args.get(name)
     if not value:
@@ -61,7 +76,7 @@ def get_workload():
     tasks = open_tasks(user_id)
     availability = availability_map(user_id)
     rows = daily_load(tasks, availability, start, end, today)
-    ml = ml_service.ml_labels(tasks, availability, today, 7)
+    ml = ml_service.ml_labels(tasks, availability, today, 7, speed_ratio_for(user_id), class_ratio_for(tasks))
     for row in rows:
         row["ml_label"] = ml.get(row["date"])
         if row["date"] == today.isoformat():

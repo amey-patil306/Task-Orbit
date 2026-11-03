@@ -1,0 +1,6 @@
+# Only needed to generate data, train models and run the notebook (not on the server).
+-r requirements.txt
+matplotlib>=3.8
+notebook>=7.0
+nbconvert>=7.0
+ipykernel>=6.0

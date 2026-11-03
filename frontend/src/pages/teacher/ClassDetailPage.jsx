@@ -221,8 +221,8 @@ function StudentsTab({ classId, roster }) {
         </table>
       </div>
       <p className="mt-3 text-xs text-slate-500">
-        Risk is a rule-based early-warning score (overdue work, overloaded days, late history, stress check-ins).
-        It will be replaced by the ML risk model once trained.
+        When a student has your work due within 3 days, risk comes from the ML late-submission model (trained on
+        workload, past lateness, progress and stress). Otherwise it is the rule-based early-warning score.
       </p>
       <ConfirmDialog open={Boolean(removing)} title="Remove student?" confirmLabel="Remove" busy={remove.isPending}
         message={`${removing?.name} will leave this class and their unfinished tasks from it will be removed.`}

@@ -13,6 +13,14 @@ Backend (from `backend/`, Windows):
 - Demo data: `.venv\Scripts\python scripts\seed.py` (login demo@taskorbit.in / demo12345)
 - Test: `.venv\Scripts\python -m pytest`
 
+ML (from `backend/`, needs `pip install -r requirements-ml.txt`):
+
+- Data: `.venv\Scripts\python -m ml.generate_dataset` (writes ml/data/, not committed)
+- Train: `.venv\Scripts\python -m ml.train` (writes ml/artifacts/: models, metrics.json, figures/)
+- Notebook: `.venv\Scripts\python -m ml.make_notebook`, then
+  `.venv\Scripts\jupyter nbconvert --to notebook --execute --inplace ..\notebooks\task_orbit_ml.ipynb`
+- Restart the backend after training: models are loaded once at start.
+
 Frontend (from `frontend/`):
 
 - Install: `npm install`, then copy `.env.example` to `.env.local`

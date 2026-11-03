@@ -195,8 +195,34 @@ def student_risk(data: dict, today: date, latest_stress: int | None) -> dict:
         reasons.append(f"reported high stress ({latest_stress}/5)")
 
     level = "high" if score >= 6 else "medium" if score >= 3 else "low"
-    return {"risk": level, "score": score, "reasons": reasons, "overloaded_days_7d": high_days,
-            "open_tasks": len(data["open"]), "overdue": len(overdue)}
+    result = {"risk": level, "score": score, "reasons": reasons, "overloaded_days_7d": high_days,
+              "open_tasks": len(data["open"]), "overdue": len(overdue), "risk_source": "rules", "late_probability": None}
+
+    # Model C: chance of submitting each teacher task due in the next 3 days late (the window it was trained on).
+    from . import ml_service  # noqa: PLC0415
+
+    probs = []
+    for t in data["open"]:
+        if t.assignment_id and 0 <= (local_day(t.due_date) - today).days <= 3:
+            p = ml_service.late_probability(t, data["open"], data["done"], data["avail"], today, latest_stress)
+            if p is None:
+                return result  # model not loaded: keep the rule-based answer
+            probs.append((p, t))
+    if probs:
+        p, t = max(probs, key=lambda x: x[0])
+        result.update(
+            risk="high" if p >= ML_HIGH else "medium" if p >= ML_MEDIUM else "low",
+            score=round(p * 10, 1), risk_source="ml", late_probability=round(p, 2),
+            reasons=[f"ML: {round(p * 100)}% chance \"{t.title}\" is submitted late"] + reasons,
+        )
+    return result
+
+
+# Model C was trained with balanced class weights, so its probabilities run high. Cut-offs picked on
+# held-out students (base late rate 26%): >= 0.60 flags ~22%, of whom 50% really are late
+# (about 2x the base rate); >= 0.50 flags ~38% with 42% precision. See notebooks/task_orbit_ml.ipynb.
+ML_HIGH = 0.6
+ML_MEDIUM = 0.5
 
 
 def latest_stress(student_ids: list[int]) -> dict:
@@ -265,6 +291,38 @@ def class_average_hours(assignment_id: int) -> dict:
     rows = db.session.scalars(db.select(Task.actual_hours).where(
         Task.assignment_id == assignment_id, Task.status == "done", Task.actual_hours.is_not(None))).all()
     return {"completed": len(rows), "avg_actual_hours": round(mean(rows), 1) if rows else None}
+
+
+def class_ratios(assignment_ids: list[int]) -> dict:
+    """{assignment_id: (avg actual / expected hours, number done)} - Model B's class signal."""
+    if not assignment_ids:
+        return {}
+    out = defaultdict(list)
+    rows = db.session.execute(db.select(Task.assignment_id, Task.actual_hours, Assignment.expected_hours)
+                              .join(Assignment, Task.assignment_id == Assignment.id)
+                              .where(Task.assignment_id.in_(assignment_ids), Task.status == "done",
+                                     Task.actual_hours.is_not(None)))
+    for aid, actual, expected in rows:
+        out[aid].append(actual / expected)
+    return {aid: (mean(v), len(v)) for aid, v in out.items()}
+
+
+def ml_estimates(open_tasks, done_tasks) -> dict:
+    """{task_id: predicted real hours} for a student's open tasks (empty if Model B is not loaded)."""
+    from ml.features import user_speed_ratio  # noqa: PLC0415
+
+    from . import ml_service  # noqa: PLC0415
+
+    speed = user_speed_ratio(done_tasks)
+    ratios = class_ratios([t.assignment_id for t in open_tasks if t.assignment_id])
+    out = {}
+    for t in open_tasks:
+        ratio, n = ratios.get(t.assignment_id, (None, 0))
+        est = ml_service.estimate_hours(t, speed, ratio, n)
+        if est is None:
+            return {}
+        out[t.id] = est
+    return out
 
 
 # ---------------------------------------------------------------- subject share & stress

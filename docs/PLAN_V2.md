@@ -130,13 +130,23 @@ Teacher (all under `/api/teacher`, role checked, 403 for students):
 All three are trained on synthetic data first (`generate_dataset.py`), validated on real seed or
 classmate data, split **by student**, and compared with the rule baseline. Rules stay as the fallback.
 
+## 6b. ML results (synthetic data, held-out students)
+
+| Model | Algorithm chosen | Result | Baseline |
+|---|---|---|---|
+| A. Overload | Logistic Regression | macro-F1 0.749 | rules 0.698 (+5.1 pts); **0.80 target not met** |
+| B. Time estimate | Gradient Boosting | MAE 0.76 h | student estimate 1.22 h (38% lower) |
+| C. Late risk | Logistic Regression | macro-F1 0.628 | rule score 0.437 (+19.2 pts) |
+
+Details, figures and limitations: `notebooks/task_orbit_ml.ipynb`, `backend/ml/artifacts/metrics.json`.
+
 ## 7. Build order
 
 | Phase | Scope |
 |---|---|
 | **A. Backend** ✅ | Roles + teacher signup code; classrooms, enrollments, assignments → task fan-out; extension requests with evidence; check-ins; deadline advisor; class analytics; teacher insights; rule-based risk score; fresh migration; demo seed (2 teachers, 3 classes, ~30 students, history) |
 | **B. UI** ✅ | Role-aware login and register; student additions (classes, extension button, check-in, class-average hint); teacher app: dashboard, classes, class detail with analytics, assignment form with live Deadline Advisor, extension inbox |
-| **C. ML** | Dataset generator, `features.py`, training of A/B/C, `metrics.json`, evaluation notebook, plug into `ml_service` |
+| **C. ML** ✅ | Dataset generator, `features.py`, training of A/B/C, `metrics.json`, evaluation notebook, plug into `ml_service` |
 | D. Polish | Deploy (Vercel, Render, Neon), report figures, viva demo script |
 
 ## 8. Out of scope (mention as future work)

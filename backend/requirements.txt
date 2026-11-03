@@ -7,4 +7,8 @@ pydantic[email]>=2.6,<3
 python-dotenv>=1.0
 psycopg2-binary>=2.9
 gunicorn>=22.0; sys_platform != "win32"
+scikit-learn>=1.4,<2
+pandas>=2.1
+numpy>=1.26
+joblib>=1.3
 pytest>=8.0

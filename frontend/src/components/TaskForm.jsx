@@ -59,12 +59,18 @@ function TeacherTaskInfo({ task }) {
   return (
     <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm sm:col-span-2">
       <p className="font-semibold text-emerald-900">{task.title}</p>
-      <p className="mt-0.5 text-emerald-800">{t.classroom_name} · set by {t.teacher_name}</p>
+      <p className="mt-0.5 text-emerald-800">{t.classroom_name} Â· set by {t.teacher_name}</p>
       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-slate-700">
         <dt className="text-slate-500">Type</dt><dd className="capitalize">{task.type}</dd>
         <dt className="text-slate-500">Difficulty</dt><dd>{task.difficulty} / 5</dd>
         <dt className="text-slate-500">Due</dt><dd>{formatDateTime(task.due_date)}</dd>
         <dt className="text-slate-500">Teacher expects</dt><dd>{t.expected_hours} h</dd>
+        {insight.data?.ml_estimate_hours != null && (
+          <>
+            <dt className="text-slate-500">AI estimate for you</dt>
+            <dd className="font-medium text-indigo-700">{insight.data.ml_estimate_hours} h</dd>
+          </>
+        )}
         {insight.data?.avg_actual_hours != null && (
           <>
             <dt className="text-slate-500">Classmates took</dt>

@@ -1,0 +1,180 @@
+{
+  "model_version": "v1-20261103",
+  "trained_at": "2026-11-03T17:57:48+00:00",
+  "data": "synthetic (ml/generate_dataset.py)",
+  "split": "80/20 by student (GroupShuffleSplit), 5-fold GroupKFold CV",
+  "overload": {
+    "model": "logistic_regression",
+    "cv_macro_f1": {
+      "logistic_regression": 0.7512,
+      "random_forest": 0.749,
+      "gradient_boosting": 0.7507
+    },
+    "rows": 71400,
+    "test_rows": 14280,
+    "test_students": 60,
+    "class_balance": {
+      "low": 0.565,
+      "high": 0.303,
+      "medium": 0.133
+    },
+    "ml": {
+      "accuracy": 0.8029,
+      "macro_f1": 0.7487
+    },
+    "rules": {
+      "accuracy": 0.8049,
+      "macro_f1": 0.6976
+    },
+    "confusion_ml": [
+      [
+        6694,
+        1396,
+        10
+      ],
+      [
+        230,
+        1412,
+        229
+      ],
+      [
+        107,
+        842,
+        3360
+      ]
+    ],
+    "confusion_rules": [
+      [
+        7741,
+        338,
+        21
+      ],
+      [
+        889,
+        769,
+        213
+      ],
+      [
+        441,
+        884,
+        2984
+      ]
+    ],
+    "labels": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "feature_importance": {
+      "rule_ratio_day": 0.5942,
+      "user_speed_ratio": 0.1001,
+      "rule_ratio_7d": 0.0543,
+      "rule_ratio_3d": 0.0522,
+      "hours_due_7d": 0.0377,
+      "n_due_7d": 0.0261,
+      "class_ratio_7d": 0.0212,
+      "avail_hours_3d": 0.0167,
+      "hours_due_3d": 0.0155,
+      "hours_required_day": 0.0143,
+      "avg_difficulty": 0.0122,
+      "exam_within_7d": 0.0122,
+      "days_ahead": 0.0107,
+      "n_due_3d": 0.0088,
+      "backlog_hours": 0.0083,
+      "avail_hours_7d": 0.0066,
+      "max_difficulty": 0.0049,
+      "weekday": 0.004
+    },
+    "improvement_macro_f1_points": 5.1
+  },
+  "time": {
+    "model": "gradient_boosting",
+    "cv_neg_mae": {
+      "ridge": -0.9409,
+      "random_forest": -0.7948,
+      "gradient_boosting": -0.7903
+    },
+    "rows": 14111,
+    "test_rows": 2823,
+    "ml": {
+      "mae": 0.758,
+      "r2": 0.867
+    },
+    "raw_estimate": {
+      "mae": 1.217,
+      "r2": 0.635
+    },
+    "feature_importance": {
+      "estimated_hours": 0.7539,
+      "class_avg_ratio": 0.1374,
+      "user_speed_ratio": 0.1001,
+      "difficulty": 0.004,
+      "type_project": 0.0029,
+      "class_done": 0.0015,
+      "type_exam": 0.0001,
+      "type_assignment": 0.0,
+      "type_practical": 0.0,
+      "type_other": 0.0
+    },
+    "mae_reduction_pct": 37.7
+  },
+  "risk": {
+    "model": "logistic_regression",
+    "cv_macro_f1": {
+      "logistic_regression": 0.5969,
+      "random_forest": 0.5954,
+      "gradient_boosting": 0.5341
+    },
+    "rows": 9456,
+    "test_rows": 1901,
+    "late_rate": 0.253,
+    "ml": {
+      "accuracy": 0.677,
+      "macro_f1": 0.6285,
+      "precision_late": 0.4172,
+      "recall_late": 0.6061
+    },
+    "rules": {
+      "accuracy": 0.4366,
+      "macro_f1": 0.4366,
+      "precision_late": 0.2975,
+      "recall_late": 0.8545
+    },
+    "confusion_ml": [
+      [
+        987,
+        419
+      ],
+      [
+        195,
+        300
+      ]
+    ],
+    "confusion_rules": [
+      [
+        407,
+        999
+      ],
+      [
+        72,
+        423
+      ]
+    ],
+    "feature_importance": {
+      "user_speed_ratio": 0.1823,
+      "stress": 0.1433,
+      "has_stress": 0.1295,
+      "difficulty": 0.1211,
+      "late_rate": 0.1084,
+      "days_left": 0.0797,
+      "estimated_hours": 0.0774,
+      "n_past": 0.0429,
+      "started": 0.0388,
+      "peak_ratio_7d": 0.035,
+      "overloaded_days_7d": 0.0304,
+      "overdue_tasks": 0.0101,
+      "open_tasks": 0.001
+    },
+    "improvement_macro_f1_points": 19.2
+  }
+}

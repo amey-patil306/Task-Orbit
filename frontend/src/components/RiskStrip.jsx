@@ -25,8 +25,15 @@ export default function RiskStrip({ forecast }) {
           )
         })}
       </div>
+      {forecast.speed_ratio >= 1.15 && (
+        <p className="mt-3 rounded-lg bg-indigo-50 p-2.5 text-sm text-indigo-900">
+          You usually take <b>{forecast.speed_ratio.toFixed(1)}×</b> as long as you estimate, so the AI forecast accounts for that.
+          {forecast.days.some((d) => d.probability != null && d.risk !== d.rule_label) &&
+            ' Some days look lighter on paper than they will really be.'}
+        </p>
+      )}
       <p className="mt-2 text-xs text-slate-400">
-        {forecast.source === 'ml' ? `ML forecast · model ${forecast.model_version}` : 'Rule-based forecast (ML model not trained yet)'}
+        {forecast.source === 'ml' ? `AI forecast (model ${forecast.model_version}) · falls back to rules when unsure` : 'Rule-based forecast (ML model not loaded)'}
       </p>
     </div>
   )
