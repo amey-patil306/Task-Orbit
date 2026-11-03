@@ -23,3 +23,11 @@
 
   .card { @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5; }
 }
+
+/* FullCalendar tweaks to match the app */
+.fc { --fc-border-color: #e2e8f0; --fc-today-bg-color: #eef2ff; --fc-button-bg-color: #4f46e5;
+  --fc-button-border-color: #4f46e5; --fc-button-hover-bg-color: #4338ca; --fc-button-hover-border-color: #4338ca;
+  --fc-button-active-bg-color: #3730a3; --fc-button-active-border-color: #3730a3; font-size: 0.85rem; }
+.fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 600; }
+.fc .fc-event { cursor: pointer; padding: 1px 3px; border-radius: 4px; }
+.fc .fc-conflict-day { box-shadow: inset 0 0 0 2px #dc2626; background-color: #fef2f2; }

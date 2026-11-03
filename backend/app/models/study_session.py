@@ -25,4 +25,8 @@ class StudySession(db.Model):
             "planned_date": iso_date(self.planned_date),
             "planned_hours": self.planned_hours,
             "done": self.done,
+            # Task details so the planner screen can show sessions without extra requests.
+            "task_title": self.task.title if self.task else None,
+            "task_type": self.task.type if self.task else None,
+            "subject_id": self.task.subject_id if self.task else None,
         }

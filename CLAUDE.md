@@ -7,6 +7,7 @@ Backend (from `backend/`, Windows):
 - Install: `python -m venv .venv` then `.venv\Scripts\pip install -r requirements.txt`
 - Migrate: `.venv\Scripts\flask --app wsgi db upgrade`
 - Run: `.venv\Scripts\flask --app wsgi run --debug` (http://127.0.0.1:5000)
+- Demo data: `.venv\Scripts\python scripts\seed.py` (login demo@taskorbit.in / demo12345)
 - Test: `.venv\Scripts\python -m pytest`
 
 Frontend (from `frontend/`):

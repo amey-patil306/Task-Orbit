@@ -262,6 +262,18 @@ header `Authorization: Bearer <token>`.
 > `rule_label`: low < 0.7 ≤ medium ≤ 1.0 < high. `workload_summary` = the next 7 days of these
 > rows plus `overloaded_days`. Task create/update respond with
 > `{"task": {...}, "workload_summary": {...}}`.
+>
+> **(ASSUMED) other interim rules** — "today" and a deadline's day are taken in IST:
+> - **Conflicts:** 2+ open deadlines on the same day in the next 14 days; `critical` if 3+ or
+>   one is an exam, else `warning`.
+> - **Alerts** (recomputed after task/availability changes and on `GET /api/alerts`):
+>   `overload` for each high day (critical above 1.3), `collision` per conflict, `deadline`
+>   for overdue/due today (warning, critical if overdue) and due tomorrow (info).
+> - **Planner:** `priority_score = 2·priority + difficulty + 10/(days_left+1) + 3 if exam`.
+>   Tasks are placed earliest-deadline-first (score breaks ties) on the earliest days with free
+>   time, max 3 h of one task per day (lifted if needed); ticked sessions count as done hours.
+> - **Predict:** falls back to rule labels (`source: "rules"`, `model_version: "rules-v0"`,
+>   `probability: null`) until `ml/artifacts/overload_clf.joblib` exists.
 
 ## 10. ML plan
 
@@ -373,12 +385,10 @@ must answer "Am I in trouble this week, and what should I do next?" in one glanc
 > 1. Backend foundation: app factory, config, all seven models + migration, error format,
 >    health, auth, subjects, availability, pytest. ✅
 > 2. Task CRUD + filters (with interim workload_summary). ✅
-> 3. Rule engine (section 9): workload, conflicts, alerts, snapshots + `test_engine.py`.
-> 4. Planner + `test_planner.py`.
+> 3. Rule engine (section 9): workload, conflicts, alerts, snapshots. ✅ (interim rules)
+> 4. Planner. ✅ (interim rules)
 > 5. ML: dataset generator, features, training, `ml_service` fallback, `/api/predict`, notebooks.
-> 6. Frontend: scaffold, auth, layout, then each page. (Started early: scaffold, auth, layout,
->    Tasks, Settings and a task-based Dashboard are done ✅; Calendar, Workload, Planner and
->    Alerts are placeholders until their endpoints exist.)
+> 6. Frontend: all nine screens. ✅
 > 7. Seed script, deployment, polish.
 
 ## 14. Test cases

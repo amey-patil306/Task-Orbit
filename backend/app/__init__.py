@@ -55,4 +55,8 @@ def create_app(overrides: dict | None = None) -> Flask:
 
     register_error_handlers(app)
     _register_jwt_errors()
+
+    from .services import ml_service
+
+    ml_service.init_app(app)  # load models once at start (section 10)
     return app

@@ -6,9 +6,10 @@ from flask_jwt_extended import jwt_required
 from ..extensions import db
 from ..models import Subject, Task
 from ..schemas import TaskComplete, TaskCreate, TaskQuery, TaskUpdate
+from ..services.alert_service import recompute_alerts
 from ..services.availability_service import availability_map
 from ..services.workload_engine import workload_summary
-from ..utils.dates import utcnow
+from ..utils.dates import local_today, utcnow
 from ..utils.errors import ApiError
 from ..utils.request import current_user_id, get_owned_or_404, parse_body
 
@@ -26,7 +27,7 @@ def _check_subject(subject_id: int | None, user_id: int) -> None:
 
 def _summary(user_id: int) -> dict:
     tasks = db.session.scalars(db.select(Task).where(Task.user_id == user_id, Task.status != "done")).all()
-    return workload_summary(tasks, availability_map(user_id), today=utcnow().date())
+    return workload_summary(tasks, availability_map(user_id), today=local_today())
 
 
 def _task_with_summary(task: Task, user_id: int) -> dict:
@@ -71,7 +72,8 @@ def create_task():
     _apply_status(task, data.status)
     db.session.add(task)
     db.session.commit()
-    # TODO(section 9): recompute alerts for the affected dates.
+    recompute_alerts(current_user_id())
+    db.session.commit()
     return jsonify(_task_with_summary(task, user_id)), 201
 
 
@@ -96,7 +98,8 @@ def update_task(task_id: int):
     if status:
         _apply_status(task, status)
     db.session.commit()
-    # TODO(section 9): recompute alerts for the affected dates.
+    recompute_alerts(current_user_id())
+    db.session.commit()
     return jsonify(_task_with_summary(task, user_id))
 
 
@@ -108,7 +111,8 @@ def complete_task(task_id: int):
     task.actual_hours = data.actual_hours
     _apply_status(task, "done")
     db.session.commit()
-    # TODO(section 9): recompute alerts for the affected dates.
+    recompute_alerts(current_user_id())
+    db.session.commit()
     return jsonify(task.to_dict())
 
 
@@ -118,5 +122,6 @@ def delete_task(task_id: int):
     task = get_owned_or_404(Task, task_id, "Task")
     db.session.delete(task)
     db.session.commit()
-    # TODO(section 9): recompute alerts for the affected dates.
+    recompute_alerts(current_user_id())
+    db.session.commit()
     return "", 204

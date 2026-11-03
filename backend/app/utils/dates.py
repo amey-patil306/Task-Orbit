@@ -1,5 +1,20 @@
 """Date helpers. Everything is stored as naive UTC; the API emits ISO 8601 with a trailing Z."""
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
+
+# Students are in India (Asia/Kolkata, no daylight saving), so "which day" questions
+# - today, which day a deadline falls on - are answered in IST.
+LOCAL_OFFSET = timedelta(hours=5, minutes=30)
+
+
+def local_today() -> date:
+    return (utcnow() + LOCAL_OFFSET).date()
+
+
+def local_day(value: datetime | date) -> date:
+    """The IST calendar day of a stored (naive UTC) datetime."""
+    if isinstance(value, datetime):
+        return (value + LOCAL_OFFSET).date()
+    return value
 
 
 def utcnow() -> datetime:

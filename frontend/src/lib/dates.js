@@ -35,6 +35,12 @@ export function istToday() {
   return `${p.year}-${p.month}-${p.day}`
 }
 
+/** YYYY-MM-DD plus n days. */
+export function addDays(ymd, n) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10)
+}
+
 /** Whole days from today (IST) until an ISO datetime; negative when overdue. */
 export function daysUntil(iso) {
   const p = istParts(new Date(iso))
