@@ -8,3 +8,9 @@ Backend (from `backend/`, Windows):
 - Migrate: `.venv\Scripts\flask --app wsgi db upgrade`
 - Run: `.venv\Scripts\flask --app wsgi run --debug` (http://127.0.0.1:5000)
 - Test: `.venv\Scripts\python -m pytest`
+
+Frontend (from `frontend/`):
+
+- Install: `npm install`, then copy `.env.example` to `.env.local`
+- Run: `npm run dev` (http://localhost:5173, talks to the backend at `VITE_API_URL`)
+- Build: `npm run build`

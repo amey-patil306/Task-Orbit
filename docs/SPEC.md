@@ -376,7 +376,9 @@ must answer "Am I in trouble this week, and what should I do next?" in one glanc
 > 3. Rule engine (section 9): workload, conflicts, alerts, snapshots + `test_engine.py`.
 > 4. Planner + `test_planner.py`.
 > 5. ML: dataset generator, features, training, `ml_service` fallback, `/api/predict`, notebooks.
-> 6. Frontend: scaffold, auth, layout, then each page.
+> 6. Frontend: scaffold, auth, layout, then each page. (Started early: scaffold, auth, layout,
+>    Tasks, Settings and a task-based Dashboard are done ✅; Calendar, Workload, Planner and
+>    Alerts are placeholders until their endpoints exist.)
 > 7. Seed script, deployment, polish.
 
 ## 14. Test cases
