@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from ..extensions import db
 from ..models import Alert, Task
+from ..models.alert import ENGINE_KINDS
 from ..utils.dates import local_day, local_today
 from .availability_service import availability_map
 from .workload_engine import daily_load, find_conflicts
@@ -62,7 +63,7 @@ def recompute_alerts(user_id: int) -> None:
     wanted = desired_alerts(tasks, availability_map(user_id), today)
 
     existing = db.session.scalars(
-        db.select(Alert).where(Alert.user_id == user_id, Alert.for_date >= today)
+        db.select(Alert).where(Alert.user_id == user_id, Alert.for_date >= today, Alert.kind.in_(ENGINE_KINDS))
     ).all()
     for alert in existing:
         key = (alert.kind, alert.for_date.isoformat())

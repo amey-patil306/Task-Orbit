@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, current_app, jsonify
 from flask_jwt_extended import create_access_token, jwt_required
 
 from ..extensions import db
@@ -18,14 +18,19 @@ def _auth_payload(user: User):
 @bp.post("/register")
 def register():
     data = parse_body(RegisterIn)
+    if data.role == "teacher" and data.teacher_code != current_app.config["TEACHER_SIGNUP_CODE"]:
+        raise ApiError(400, "validation_error", "Invalid teacher code",
+                       {"teacher_code": "Ask your department for the teacher signup code"})
     if db.session.scalar(db.select(User.id).where(User.email == data.email)) is not None:
         raise ApiError(409, "email_taken", "An account with this email already exists", {"email": "already registered"})
 
-    user = User(name=data.name, email=data.email)
+    user = User(name=data.name, email=data.email, role=data.role,
+                department=data.department, year=data.year, division=data.division)
     user.set_password(data.password)
     db.session.add(user)
     db.session.flush()  # assigns user.id
-    db.session.add_all(default_availability(user.id))
+    if user.role == "student":
+        db.session.add_all(default_availability(user.id))
     db.session.commit()
     return jsonify(_auth_payload(user)), 201
 

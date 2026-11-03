@@ -30,4 +30,7 @@ class Config:
 
     CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
 
+    # Teachers must enter this code when registering, so students can't sign up as teachers.
+    TEACHER_SIGNUP_CODE = os.getenv("TEACHER_SIGNUP_CODE", "ZCOER-TEACHER")
+
     JSON_SORT_KEYS = False

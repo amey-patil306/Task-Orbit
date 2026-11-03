@@ -1,5 +1,8 @@
 Read docs/SPEC.md before any task. Follow its stack, folder structure, data model and API exactly. Ask before changing a decision.
 
+**The project has pivoted to a teacher + student app: read docs/PLAN_V2.md too. Where it differs from SPEC.md, PLAN_V2.md wins.**
+This is a college PBL project: keep code simple and readable; new features do not need unit tests.
+
 ## Dev commands
 
 Backend (from `backend/`, Windows):

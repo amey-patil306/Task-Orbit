@@ -1,8 +1,8 @@
-"""initial schema: seven tables
+"""v2 schema: teacher and student
 
-Revision ID: df0537244a07
+Revision ID: ca76d73e541a
 Revises: 
-Create Date: 2026-11-03 22:22:15.771945
+Create Date: 2026-11-03 23:02:17.846132
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'df0537244a07'
+revision = 'ca76d73e541a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,6 +23,10 @@ def upgrade():
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('password_hash', sa.String(length=255), nullable=False),
+    sa.Column('role', sa.Enum('student', 'teacher', name='user_role', native_enum=False, create_constraint=True), nullable=False),
+    sa.Column('department', sa.String(length=100), nullable=True),
+    sa.Column('year', sa.String(length=20), nullable=True),
+    sa.Column('division', sa.String(length=20), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_users'))
     )
@@ -32,15 +36,14 @@ def upgrade():
     op.create_table('alerts',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('kind', sa.Enum('overload', 'collision', 'deadline', name='alert_kind', native_enum=False, create_constraint=True), nullable=False),
+    sa.Column('kind', sa.Enum('overload', 'collision', 'deadline', 'assignment', 'extension', name='alert_kind', native_enum=False, create_constraint=True), nullable=False),
     sa.Column('severity', sa.Enum('info', 'warning', 'critical', name='alert_severity', native_enum=False, create_constraint=True), nullable=False),
     sa.Column('message', sa.String(length=500), nullable=False),
     sa.Column('for_date', sa.Date(), nullable=False),
     sa.Column('is_read', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_alerts_user_id_users'), ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_alerts')),
-    sa.UniqueConstraint('user_id', 'kind', 'for_date', name='uq_alerts_user_kind_date')
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_alerts'))
     )
     with op.batch_alter_table('alerts', schema=None) as batch_op:
         batch_op.create_index('ix_alerts_user_id_is_read', ['user_id', 'is_read'], unique=False)
@@ -56,6 +59,33 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', name=op.f('pk_availability')),
     sa.UniqueConstraint('user_id', 'weekday', name='uq_availability_user_weekday')
     )
+    op.create_table('checkins',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('week_start', sa.Date(), nullable=False),
+    sa.Column('stress', sa.Integer(), nullable=False),
+    sa.Column('note', sa.String(length=500), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.CheckConstraint('stress BETWEEN 1 AND 5', name=op.f('ck_checkins_stress_range')),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_checkins_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_checkins')),
+    sa.UniqueConstraint('user_id', 'week_start', name='uq_checkins_user_week')
+    )
+    op.create_table('classrooms',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('teacher_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=120), nullable=False),
+    sa.Column('subject_name', sa.String(length=100), nullable=False),
+    sa.Column('colour', sa.String(length=7), nullable=False),
+    sa.Column('join_code', sa.String(length=8), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['teacher_id'], ['users.id'], name=op.f('fk_classrooms_teacher_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_classrooms')),
+    sa.UniqueConstraint('join_code', name=op.f('uq_classrooms_join_code'))
+    )
+    with op.batch_alter_table('classrooms', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_classrooms_teacher_id'), ['teacher_id'], unique=False)
+
     op.create_table('subjects',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -82,10 +112,45 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', name=op.f('pk_workload_snapshots')),
     sa.UniqueConstraint('user_id', 'day', name='uq_workload_snapshots_user_day')
     )
+    op.create_table('assignments',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('classroom_id', sa.Integer(), nullable=False),
+    sa.Column('teacher_id', sa.Integer(), nullable=False),
+    sa.Column('title', sa.String(length=200), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('type', sa.Enum('assignment', 'practical', 'exam', 'project', 'other', name='assignment_type', native_enum=False, create_constraint=True), nullable=False),
+    sa.Column('difficulty', sa.Integer(), nullable=False),
+    sa.Column('expected_hours', sa.Float(), nullable=False),
+    sa.Column('start_date', sa.Date(), nullable=True),
+    sa.Column('due_date', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.CheckConstraint('difficulty BETWEEN 1 AND 5', name=op.f('ck_assignments_difficulty_range')),
+    sa.CheckConstraint('expected_hours > 0', name=op.f('ck_assignments_expected_hours_positive')),
+    sa.ForeignKeyConstraint(['classroom_id'], ['classrooms.id'], name=op.f('fk_assignments_classroom_id_classrooms'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['teacher_id'], ['users.id'], name=op.f('fk_assignments_teacher_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_assignments'))
+    )
+    with op.batch_alter_table('assignments', schema=None) as batch_op:
+        batch_op.create_index('ix_assignments_classroom_id_due_date', ['classroom_id', 'due_date'], unique=False)
+
+    op.create_table('enrollments',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('classroom_id', sa.Integer(), nullable=False),
+    sa.Column('student_id', sa.Integer(), nullable=False),
+    sa.Column('joined_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['classroom_id'], ['classrooms.id'], name=op.f('fk_enrollments_classroom_id_classrooms'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['student_id'], ['users.id'], name=op.f('fk_enrollments_student_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_enrollments')),
+    sa.UniqueConstraint('classroom_id', 'student_id', name='uq_enrollments_class_student')
+    )
+    with op.batch_alter_table('enrollments', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_enrollments_student_id'), ['student_id'], unique=False)
+
     op.create_table('tasks',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('subject_id', sa.Integer(), nullable=True),
+    sa.Column('assignment_id', sa.Integer(), nullable=True),
     sa.Column('title', sa.String(length=200), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('type', sa.Enum('assignment', 'practical', 'exam', 'project', 'other', name='task_type', native_enum=False, create_constraint=True), nullable=False),
@@ -102,12 +167,36 @@ def upgrade():
     sa.CheckConstraint('difficulty BETWEEN 1 AND 5', name=op.f('ck_tasks_difficulty_range')),
     sa.CheckConstraint('estimated_hours > 0', name=op.f('ck_tasks_estimated_hours_positive')),
     sa.CheckConstraint('priority BETWEEN 1 AND 5', name=op.f('ck_tasks_priority_range')),
+    sa.ForeignKeyConstraint(['assignment_id'], ['assignments.id'], name=op.f('fk_tasks_assignment_id_assignments'), ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], name=op.f('fk_tasks_subject_id_subjects'), ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_tasks_user_id_users'), ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_tasks'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_tasks')),
+    sa.UniqueConstraint('user_id', 'assignment_id', name='uq_tasks_user_assignment')
     )
     with op.batch_alter_table('tasks', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_tasks_assignment_id'), ['assignment_id'], unique=False)
         batch_op.create_index('ix_tasks_user_id_due_date', ['user_id', 'due_date'], unique=False)
+
+    op.create_table('extension_requests',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('task_id', sa.Integer(), nullable=False),
+    sa.Column('assignment_id', sa.Integer(), nullable=False),
+    sa.Column('student_id', sa.Integer(), nullable=False),
+    sa.Column('reason', sa.String(length=1000), nullable=False),
+    sa.Column('requested_due', sa.DateTime(), nullable=False),
+    sa.Column('status', sa.Enum('pending', 'approved', 'rejected', name='extension_status', native_enum=False, create_constraint=True), nullable=False),
+    sa.Column('evidence', sa.Text(), nullable=True),
+    sa.Column('teacher_note', sa.String(length=1000), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('decided_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['assignment_id'], ['assignments.id'], name=op.f('fk_extension_requests_assignment_id_assignments'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['student_id'], ['users.id'], name=op.f('fk_extension_requests_student_id_users'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['task_id'], ['tasks.id'], name=op.f('fk_extension_requests_task_id_tasks'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_extension_requests'))
+    )
+    with op.batch_alter_table('extension_requests', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_extension_requests_assignment_id'), ['assignment_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_extension_requests_student_id'), ['student_id'], unique=False)
 
     op.create_table('study_sessions',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -135,15 +224,34 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_study_sessions_task_id'))
 
     op.drop_table('study_sessions')
+    with op.batch_alter_table('extension_requests', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_extension_requests_student_id'))
+        batch_op.drop_index(batch_op.f('ix_extension_requests_assignment_id'))
+
+    op.drop_table('extension_requests')
     with op.batch_alter_table('tasks', schema=None) as batch_op:
         batch_op.drop_index('ix_tasks_user_id_due_date')
+        batch_op.drop_index(batch_op.f('ix_tasks_assignment_id'))
 
     op.drop_table('tasks')
+    with op.batch_alter_table('enrollments', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_enrollments_student_id'))
+
+    op.drop_table('enrollments')
+    with op.batch_alter_table('assignments', schema=None) as batch_op:
+        batch_op.drop_index('ix_assignments_classroom_id_due_date')
+
+    op.drop_table('assignments')
     op.drop_table('workload_snapshots')
     with op.batch_alter_table('subjects', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_subjects_user_id'))
 
     op.drop_table('subjects')
+    with op.batch_alter_table('classrooms', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_classrooms_teacher_id'))
+
+    op.drop_table('classrooms')
+    op.drop_table('checkins')
     op.drop_table('availability')
     with op.batch_alter_table('alerts', schema=None) as batch_op:
         batch_op.drop_index('ix_alerts_user_id_is_read')

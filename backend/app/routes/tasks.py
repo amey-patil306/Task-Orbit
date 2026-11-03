@@ -85,6 +85,13 @@ def update_task(task_id: int):
     data = parse_body(TaskUpdate)
     changes = data.model_dump(include=data.model_fields_set)
 
+    if task.assignment_id:
+        # Title, type, difficulty and deadline belong to the teacher; students can change
+        # their own estimate, priority, start date, notes and status.
+        locked = {f: "set by your teacher" for f in ("title", "type", "difficulty", "due_date", "subject_id")
+                  if f in changes and changes[f] != getattr(task, f)}
+        if locked:
+            raise ApiError(400, "validation_error", "These fields are set by your teacher", locked)
     if "subject_id" in changes:
         _check_subject(changes["subject_id"], user_id)
     start = changes.get("start_date", task.start_date)
@@ -120,6 +127,8 @@ def complete_task(task_id: int):
 @jwt_required()
 def delete_task(task_id: int):
     task = get_owned_or_404(Task, task_id, "Task")
+    if task.assignment_id:
+        raise ApiError(403, "forbidden", "Tasks set by a teacher can't be deleted. Ask for an extension instead.")
     db.session.delete(task)
     db.session.commit()
     recompute_alerts(current_user_id())

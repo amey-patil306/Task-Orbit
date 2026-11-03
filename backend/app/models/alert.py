@@ -1,15 +1,16 @@
 from ..extensions import db
 from ..utils.dates import iso_date, iso_datetime, utcnow
 
-ALERT_KINDS = ("overload", "collision", "deadline")
+# overload/collision/deadline come from the workload engine (one per kind + date, deduplicated in
+# alert_service); assignment/extension are notifications (PLAN_V2 section 4).
+ENGINE_KINDS = ("overload", "collision", "deadline")
+ALERT_KINDS = ENGINE_KINDS + ("assignment", "extension")
 ALERT_SEVERITIES = ("info", "warning", "critical")
 
 
 class Alert(db.Model):
     __tablename__ = "alerts"
     __table_args__ = (
-        # Deduplicate by kind + for_date (section 7).
-        db.UniqueConstraint("user_id", "kind", "for_date", name="uq_alerts_user_kind_date"),
         db.Index("ix_alerts_user_id_is_read", "user_id", "is_read"),
     )
 
