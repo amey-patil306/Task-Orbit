@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.db
+instance/
+node_modules/
+dist/
+.ipynb_checkpoints/
+backend/ml/data/
