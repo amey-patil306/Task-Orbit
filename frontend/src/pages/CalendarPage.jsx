@@ -8,6 +8,7 @@ import { QueryState } from '../components/States'
 import { useSubjectMap } from '../hooks/useSubjects'
 import { useTasks } from '../hooks/useTasks'
 import { useConflicts } from '../hooks/useWorkload'
+import { taskColour } from '../lib/constants'
 import { toIstInput } from '../lib/dates'
 
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -31,7 +32,7 @@ export default function CalendarPage() {
             id: String(t.id),
             title: t.title,
             start: toIstInput(t.due_date),
-            backgroundColor: t.status === 'done' ? '#cbd5e1' : subjects[t.subject_id]?.colour ?? '#6366f1',
+            backgroundColor: t.status === 'done' ? '#cbd5e1' : taskColour(t, subjects),
             borderColor: 'transparent',
             textColor: '#fff',
             classNames: t.status === 'done' ? ['line-through'] : [],

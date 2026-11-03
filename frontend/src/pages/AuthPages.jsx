@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { errorMessage, fieldErrors } from '../api/client'
-import { useAuth } from '../context/AuthContext'
+import { homeFor, useAuth } from '../context/AuthContext'
 
 function AuthShell({ title, subtitle, children, footer }) {
   return (
@@ -50,8 +50,11 @@ export function LoginPage() {
 
   const onSubmit = async (values) => {
     try {
-      await login(values)
-      navigate(location.state?.from?.pathname ?? '/', { replace: true })
+      const user = await login(values)
+      const from = location.state?.from?.pathname
+      // Only return to the previous page if it belongs to this role's part of the app.
+      const sameArea = from && from.startsWith('/teacher') === (user.role === 'teacher')
+      navigate(sameArea ? from : homeFor(user), { replace: true })
     } catch (err) {
       showServerErrors(err, ['email', 'password'])
     }
@@ -85,23 +88,43 @@ export function LoginPage() {
 export function RegisterPage() {
   const { register: signUp } = useAuth()
   const navigate = useNavigate()
-  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm()
+  const { register, handleSubmit, setError, watch, setValue, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: { role: 'student' },
+  })
   const showServerErrors = useServerErrors(setError)
+  const role = watch('role')
 
   const onSubmit = async ({ confirm, ...values }) => {
+    if (values.role === 'student') delete values.teacher_code
     try {
-      await signUp(values)
-      navigate('/settings', { replace: true, state: { welcome: true } })
+      const user = await signUp(values)
+      if (user.role === 'teacher') navigate('/teacher', { replace: true, state: { welcome: true } })
+      else navigate('/classes', { replace: true, state: { welcome: true } })
     } catch (err) {
-      showServerErrors(err, ['name', 'email', 'password'])
+      showServerErrors(err, ['name', 'email', 'password', 'teacher_code'])
     }
   }
 
   return (
-    <AuthShell title="Create your account" subtitle="Predict overload before it happens"
+    <AuthShell title="Create your account" subtitle="Balance workload across every subject"
       footer={<>Already have an account? <Link to="/login" className="font-medium text-indigo-600 hover:underline">Log in</Link></>}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {errors.root && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{errors.root.message}</p>}
+        <div>
+          <span className="label">I am a</span>
+          <input type="hidden" {...register('role')} />
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Role">
+            {[['student', 'Student', 'Track my workload'], ['teacher', 'Teacher', 'Manage my classes']].map(([value, label, hint]) => (
+              <button key={value} type="button" role="radio" aria-checked={role === value}
+                onClick={() => setValue('role', value)}
+                className={`rounded-lg border p-3 text-left transition ${role === value
+                  ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600' : 'border-slate-300 hover:border-slate-400'}`}>
+                <span className="block text-sm font-semibold">{label}</span>
+                <span className="block text-xs text-slate-500">{hint}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         <div>
           <label className="label" htmlFor="name">Name</label>
           <input id="name" autoComplete="name" className={`input ${errors.name ? 'input-error' : ''}`}
@@ -126,6 +149,30 @@ export function RegisterPage() {
             {...register('confirm', { validate: (v, all) => v === all.password || 'Passwords do not match' })} />
           {errors.confirm && <p className="field-error">{errors.confirm.message}</p>}
         </div>
+        {role === 'teacher' ? (
+          <div>
+            <label className="label" htmlFor="teacher_code">Teacher signup code</label>
+            <input id="teacher_code" className={`input ${errors.teacher_code ? 'input-error' : ''}`} autoComplete="off"
+              {...register('teacher_code', { required: 'Enter the code from your department' })} />
+            {errors.teacher_code
+              ? <p className="field-error">{errors.teacher_code.message}</p>
+              : <p className="mt-1 text-xs text-slate-500">Given to faculty by the department, so students can't sign up as teachers.</p>}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label" htmlFor="year">Year <span className="font-normal text-slate-400">(optional)</span></label>
+              <select id="year" className="input" {...register('year')}>
+                <option value="">—</option>
+                {['FE', 'SE', 'TE', 'BE'].map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label" htmlFor="division">Division <span className="font-normal text-slate-400">(optional)</span></label>
+              <input id="division" className="input" maxLength={20} placeholder="A" {...register('division')} />
+            </div>
+          </div>
+        )}
         <button type="submit" className="btn-primary w-full" disabled={isSubmitting}>
           {isSubmitting ? 'Creating account…' : 'Create account'}
         </button>

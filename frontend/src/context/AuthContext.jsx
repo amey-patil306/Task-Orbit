@@ -45,6 +45,7 @@ export function AuthProvider({ children }) {
     queryClient.clear()
     setUser(data.user)
     setStatus('authenticated')
+    return data.user
   }, [queryClient])
 
   const value = useMemo(
@@ -61,6 +62,9 @@ export function AuthProvider({ children }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
+
+/** Where each role lands after logging in. */
+export const homeFor = (user) => (user?.role === 'teacher' ? '/teacher' : '/')
 
 export function useAuth() {
   const ctx = useContext(AuthContext)

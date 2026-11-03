@@ -1,9 +1,10 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { homeFor, useAuth } from '../context/AuthContext'
 import { Spinner } from './States'
 
-export default function ProtectedRoute() {
-  const { status, retry, logout } = useAuth()
+/** Logged-in users only; with `role`, also sends the other role back to its own home. */
+export default function ProtectedRoute({ role }) {
+  const { status, user, retry, logout } = useAuth()
   const location = useLocation()
 
   if (status === 'checking') return <Spinner label="Signing you in…" className="min-h-screen" />
@@ -19,13 +20,14 @@ export default function ProtectedRoute() {
     )
   }
   if (status !== 'authenticated') return <Navigate to="/login" replace state={{ from: location }} />
+  if (role && user.role !== role) return <Navigate to={homeFor(user)} replace />
   return <Outlet />
 }
 
-/** Login/Register: send already-logged-in users to the dashboard. */
+/** Login/Register: send already-logged-in users to their dashboard. */
 export function PublicOnlyRoute() {
-  const { status } = useAuth()
+  const { status, user } = useAuth()
   if (status === 'checking') return <Spinner label="Signing you in…" className="min-h-screen" />
-  if (status === 'authenticated') return <Navigate to="/" replace />
+  if (status === 'authenticated') return <Navigate to={homeFor(user)} replace />
   return <Outlet />
 }

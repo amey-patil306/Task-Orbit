@@ -134,8 +134,8 @@ classmate data, split **by student**, and compared with the rule baseline. Rules
 
 | Phase | Scope |
 |---|---|
-| **A. Backend** | Roles + teacher signup code; classrooms, enrollments, assignments → task fan-out; extension requests with evidence; check-ins; deadline advisor; class analytics; teacher insights; rule-based risk score; fresh migration; demo seed (2 teachers, 3 classes, ~30 students, history) |
-| **B. UI** | Role-aware login and register; student additions (classes, extension button, check-in, class-average hint); teacher app: dashboard, classes, class detail with analytics, assignment form with live Deadline Advisor, extension inbox |
+| **A. Backend** ✅ | Roles + teacher signup code; classrooms, enrollments, assignments → task fan-out; extension requests with evidence; check-ins; deadline advisor; class analytics; teacher insights; rule-based risk score; fresh migration; demo seed (2 teachers, 3 classes, ~30 students, history) |
+| **B. UI** ✅ | Role-aware login and register; student additions (classes, extension button, check-in, class-average hint); teacher app: dashboard, classes, class detail with analytics, assignment form with live Deadline Advisor, extension inbox |
 | **C. ML** | Dataset generator, `features.py`, training of A/B/C, `metrics.json`, evaluation notebook, plug into `ml_service` |
 | D. Polish | Deploy (Vercel, Render, Neon), report figures, viva demo script |
 

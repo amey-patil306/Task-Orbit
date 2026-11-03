@@ -4,13 +4,14 @@ import Heatmap from '../components/Heatmap'
 import LoadBadge from '../components/LoadBadge'
 import PageHeader from '../components/PageHeader'
 import RiskStrip from '../components/RiskStrip'
+import StressCheckin from '../components/StressCheckin'
 import { EmptyState, ErrorState, QueryState, Spinner } from '../components/States'
 import { useAuth } from '../context/AuthContext'
 import { useAlerts } from '../hooks/useAlerts'
 import { useSubjectMap } from '../hooks/useSubjects'
 import { useTasks } from '../hooks/useTasks'
 import { usePredict, useWorkload } from '../hooks/useWorkload'
-import { TASK_TYPES, labelOf } from '../lib/constants'
+import { TASK_TYPES, labelOf, taskColour, taskSubject } from '../lib/constants'
 import { daysUntil, relativeDue } from '../lib/dates'
 
 function greeting() {
@@ -74,10 +75,10 @@ function NextTasks({ tasks }) {
         const n = daysUntil(t.due_date)
         return (
           <li key={t.id} className="flex items-center gap-3 py-3">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: subjects[t.subject_id]?.colour ?? '#CBD5E1' }} />
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: taskColour(t, subjects) }} />
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{t.title}</p>
-              <p className="text-xs text-slate-500">{labelOf(TASK_TYPES, t.type)} · {t.estimated_hours} h · priority {t.priority}</p>
+              <p className="text-xs text-slate-500">{taskSubject(t, subjects) ?? labelOf(TASK_TYPES, t.type)} · {t.estimated_hours} h · priority {t.priority}</p>
             </div>
             <span className={`whitespace-nowrap text-sm ${n < 0 ? 'font-medium text-red-700' : n <= 2 ? 'text-amber-700' : 'text-slate-500'}`}>
               {relativeDue(t.due_date)}
@@ -104,9 +105,10 @@ export default function DashboardPage() {
 
       {noTasks ? (
         <EmptyState title="Welcome! Let's add your first task"
-          message="Add assignments, practicals, exams and projects. Task Orbit will show your daily load, warn you before you're overloaded and build a study plan."
+          message="Join your classes to get your teachers' assignments, or add your own tasks. Task Orbit will show your daily load, warn you before you're overloaded and build a study plan."
           action={<div className="flex justify-center gap-2">
-            <Link to="/tasks" className="btn-primary">Add a task</Link>
+            <Link to="/classes" className="btn-primary">Join a class</Link>
+            <Link to="/tasks" className="btn-secondary">Add a task</Link>
             <Link to="/settings" className="btn-secondary">Set study hours</Link>
           </div>} />
       ) : (
@@ -114,6 +116,8 @@ export default function DashboardPage() {
           <QueryState query={workload} loadingLabel="Calculating today's load…">
             {(rows) => <TodayCard workload={rows} forecast={predict.data} />}
           </QueryState>
+
+          <StressCheckin />
 
           <Section title="Next 7 days risk" link={{ to: '/workload', label: 'Details' }} query={predict}>
             {predict.data && <RiskStrip forecast={predict.data} />}

@@ -29,4 +29,6 @@ class StudySession(db.Model):
             "task_title": self.task.title if self.task else None,
             "task_type": self.task.type if self.task else None,
             "subject_id": self.task.subject_id if self.task else None,
+            "class_colour": self.task.assignment.classroom.colour if self.task and self.task.assignment else None,
+            "class_name": self.task.assignment.classroom.subject_name if self.task and self.task.assignment else None,
         }

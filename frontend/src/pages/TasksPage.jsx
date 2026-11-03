@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { errorMessage } from '../api/client'
 import CompleteDialog from '../components/CompleteDialog'
+import ExtensionDialog from '../components/ExtensionDialog'
 import Icon from '../components/Icons'
 import Modal, { ConfirmDialog } from '../components/Modal'
 import PageHeader from '../components/PageHeader'
@@ -38,6 +39,7 @@ export default function TasksPage() {
   const [editing, setEditing] = useState(null) // null = closed, {} = new, task = edit
   const [completing, setCompleting] = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const [extending, setExtending] = useState(null)
   const [summary, setSummary] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
 
@@ -75,7 +77,7 @@ export default function TasksPage() {
 
   return (
     <>
-      <PageHeader title="Tasks" subtitle="Assignments, practicals, exams and projects" actions={addButton} />
+      <PageHeader title="Tasks" subtitle="Work from your teachers plus your own tasks" actions={addButton} />
       <SummaryNotice summary={summary} onClose={() => setSummary(null)} />
 
       <div className="mb-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
@@ -102,7 +104,7 @@ export default function TasksPage() {
           : <EmptyState title="No tasks yet" message="Add your upcoming assignments, practicals and exams to see your workload." action={addButton} />}>
         {(tasks) => (
           <TaskTable tasks={tasks} subjects={subjectMap}
-            onEdit={setEditing} onComplete={setCompleting} onDelete={(t) => { setDeleteError(null); setDeleting(t) }} />
+            onEdit={setEditing} onComplete={setCompleting} onExtend={setExtending} onDelete={(t) => { setDeleteError(null); setDeleting(t) }} />
         )}
       </QueryState>
 
@@ -123,6 +125,8 @@ export default function TasksPage() {
           await complete.mutateAsync({ id: completing.id, actualHours: hours })
           setCompleting(null)
         }} />
+
+      <ExtensionDialog task={extending} onClose={() => setExtending(null)} />
 
       <ConfirmDialog open={Boolean(deleting)} title="Delete task?" busy={remove.isPending}
         message={deleteError ?? `"${deleting?.title}" and its planned study sessions will be removed. This cannot be undone.`}

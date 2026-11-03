@@ -1,4 +1,4 @@
-import { TASK_STATUSES, TASK_TYPES, labelOf } from '../lib/constants'
+import { TASK_STATUSES, TASK_TYPES, labelOf, taskColour, taskSubject } from '../lib/constants'
 import { daysUntil, formatDateTime, relativeDue } from '../lib/dates'
 import Icon from './Icons'
 
@@ -8,10 +8,21 @@ const STATUS_STYLES = {
   done: 'bg-green-50 text-green-700',
 }
 
-function SubjectDot({ subject }) {
+function Dot({ task, subjects }) {
   return (
     <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-      style={{ backgroundColor: subject?.colour ?? '#CBD5E1' }} title={subject?.name ?? 'No subject'} />
+      style={{ backgroundColor: taskColour(task, subjects) }} title={taskSubject(task, subjects) ?? 'No subject'} />
+  )
+}
+
+function TeacherBadge({ task }) {
+  if (!task.from_teacher) return null
+  const extended = task.due_date !== task.from_teacher.original_due_date
+  return (
+    <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-800"
+      title={`Set by ${task.from_teacher.teacher_name}`}>
+      Teacher{extended && ' · extended'}
+    </span>
   )
 }
 
@@ -19,25 +30,34 @@ function DueText({ task }) {
   if (task.status === 'done') return <span className="text-slate-400">{formatDateTime(task.due_date)}</span>
   const n = daysUntil(task.due_date)
   const tone = n < 0 ? 'text-red-700 font-medium' : n <= 2 ? 'text-amber-700' : 'text-slate-600'
-  return (
-    <span title={formatDateTime(task.due_date)} className={tone}>{relativeDue(task.due_date)}</span>
-  )
+  return <span title={formatDateTime(task.due_date)} className={tone}>{relativeDue(task.due_date)}</span>
 }
 
-function Actions({ task, onComplete, onEdit, onDelete }) {
+function Actions({ task, onComplete, onEdit, onDelete, onExtend }) {
   return (
     <div className="flex justify-end gap-1">
       {task.status !== 'done' && (
-        <button type="button" className="btn-ghost text-green-700" onClick={() => onComplete(task)} aria-label={`Mark ${task.title} done`} title="Mark done">
+        <button type="button" className="btn-ghost text-green-700" onClick={() => onComplete(task)}
+          aria-label={`Mark ${task.title} done`} title="Mark done">
           <Icon name="check" className="h-4 w-4" />
         </button>
       )}
       <button type="button" className="btn-ghost" onClick={() => onEdit(task)} aria-label={`Edit ${task.title}`} title="Edit">
         <Icon name="edit" className="h-4 w-4" />
       </button>
-      <button type="button" className="btn-ghost text-red-600" onClick={() => onDelete(task)} aria-label={`Delete ${task.title}`} title="Delete">
-        <Icon name="trash" className="h-4 w-4" />
-      </button>
+      {task.from_teacher ? (
+        task.status !== 'done' && (
+          <button type="button" className="btn-ghost text-amber-700" onClick={() => onExtend(task)}
+            aria-label={`Ask for more time on ${task.title}`} title="Ask for more time">
+            <Icon name="clock" className="h-4 w-4" />
+          </button>
+        )
+      ) : (
+        <button type="button" className="btn-ghost text-red-600" onClick={() => onDelete(task)}
+          aria-label={`Delete ${task.title}`} title="Delete">
+          <Icon name="trash" className="h-4 w-4" />
+        </button>
+      )}
     </div>
   )
 }
@@ -50,12 +70,13 @@ export default function TaskTable({ tasks, subjects, ...handlers }) {
         {tasks.map((t) => (
           <li key={t.id} className={`card ${t.status === 'done' ? 'opacity-70' : ''}`}>
             <div className="flex items-start gap-2">
-              <span className="mt-1.5"><SubjectDot subject={subjects[t.subject_id]} /></span>
+              <span className="mt-1.5"><Dot task={t} subjects={subjects} /></span>
               <div className="min-w-0 flex-1">
                 <p className={`font-medium ${t.status === 'done' ? 'line-through' : ''}`}>{t.title}</p>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                  <TeacherBadge task={t} />
                   {labelOf(TASK_TYPES, t.type)} · {t.estimated_hours} h · P{t.priority}
-                  {subjects[t.subject_id] && ` · ${subjects[t.subject_id].name}`}
+                  {taskSubject(t, subjects) && ` · ${taskSubject(t, subjects)}`}
                 </p>
                 <p className="mt-1 text-sm"><DueText task={t} /></p>
               </div>
@@ -87,10 +108,12 @@ export default function TaskTable({ tasks, subjects, ...handlers }) {
               <tr key={t.id} className={t.status === 'done' ? 'text-slate-400' : ''}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <SubjectDot subject={subjects[t.subject_id]} />
+                    <Dot task={t} subjects={subjects} />
                     <div className="min-w-0">
                       <p className={`truncate font-medium ${t.status === 'done' ? 'line-through' : 'text-slate-900'}`}>{t.title}</p>
-                      {subjects[t.subject_id] && <p className="text-xs text-slate-500">{subjects[t.subject_id].name}</p>}
+                      <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <TeacherBadge task={t} />{taskSubject(t, subjects)}
+                      </p>
                     </div>
                   </div>
                 </td>

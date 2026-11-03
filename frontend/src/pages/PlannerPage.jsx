@@ -39,8 +39,9 @@ function SessionList({ sessions }) {
                     <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                       checked={s.done} disabled={tick.isPending}
                       onChange={(e) => tick.mutate({ id: s.id, done: e.target.checked })} />
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: subjects[s.subject_id]?.colour ?? '#CBD5E1' }} />
-                    <span className={`flex-1 text-sm ${s.done ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{s.task_title}</span>
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: s.class_colour ?? subjects[s.subject_id]?.colour ?? '#CBD5E1' }} />
+                    <span className={`flex-1 text-sm ${s.done ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{s.task_title}
+                      {s.class_name && <span className="ml-2 text-xs text-slate-400">{s.class_name}</span>}</span>
                     <span className="text-sm tabular-nums text-slate-500">{s.planned_hours} h</span>
                   </label>
                 </li>

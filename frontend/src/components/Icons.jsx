@@ -14,6 +14,12 @@ const paths = {
   logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11',
   x: 'M6 6l12 12M18 6 6 18',
   refresh: 'M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5',
+  classes: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6',
+  inbox: 'M3 13h5l2 3h4l2-3h5M5 5h14l2 8v6H3v-6l2-8Z',
+  copy: 'M9 9h11v11H9zM5 15H4V4h11v1',
+  spark: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6',
+  back: 'M15 18l-6-6 6-6',
+  clock: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z',
 }
 
 export default function Icon({ name, className = 'h-5 w-5', ...props }) {

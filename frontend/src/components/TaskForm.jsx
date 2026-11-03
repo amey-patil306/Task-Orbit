@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { errorMessage, fieldErrors } from '../api/client'
 import { TASK_STATUSES, TASK_TYPES } from '../lib/constants'
-import { fromIstInput, toIstInput } from '../lib/dates'
+import { formatDateTime, fromIstInput, toIstInput } from '../lib/dates'
+import { useTaskInsight } from '../hooks/useClassrooms'
 
 const LEVELS = [1, 2, 3, 4, 5]
 
@@ -21,7 +22,17 @@ function toFormValues(task) {
   }
 }
 
-function toBody(v, isEdit) {
+function toBody(v, isEdit, locked) {
+  if (locked) {
+    // Teacher tasks: only the student's own planning fields can change.
+    return {
+      priority: Number(v.priority),
+      estimated_hours: Number(v.estimated_hours),
+      start_date: v.start_date || null,
+      description: v.description.trim() || null,
+      status: v.status,
+    }
+  }
   const body = {
     title: v.title.trim(),
     type: v.type,
@@ -41,8 +52,33 @@ function toBody(v, isEdit) {
  * Add/edit task form. `onSubmit(body)` must return a promise; server validation
  * errors are mapped back onto the matching fields.
  */
+/** Read-only details of a task set by a teacher, plus what classmates really spent on it. */
+function TeacherTaskInfo({ task }) {
+  const insight = useTaskInsight(task.id)
+  const t = task.from_teacher
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm sm:col-span-2">
+      <p className="font-semibold text-emerald-900">{task.title}</p>
+      <p className="mt-0.5 text-emerald-800">{t.classroom_name} � set by {t.teacher_name}</p>
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-slate-700">
+        <dt className="text-slate-500">Type</dt><dd className="capitalize">{task.type}</dd>
+        <dt className="text-slate-500">Difficulty</dt><dd>{task.difficulty} / 5</dd>
+        <dt className="text-slate-500">Due</dt><dd>{formatDateTime(task.due_date)}</dd>
+        <dt className="text-slate-500">Teacher expects</dt><dd>{t.expected_hours} h</dd>
+        {insight.data?.avg_actual_hours != null && (
+          <>
+            <dt className="text-slate-500">Classmates took</dt>
+            <dd className="font-medium text-emerald-900">{insight.data.avg_actual_hours} h on average ({insight.data.completed} done)</dd>
+          </>
+        )}
+      </dl>
+    </div>
+  )
+}
+
 export default function TaskForm({ id = 'task-form', task, subjects, onSubmit }) {
   const isEdit = Boolean(task)
+  const locked = Boolean(task?.from_teacher)
   const {
     register, handleSubmit, reset, setError, watch,
     formState: { errors },
@@ -52,7 +88,7 @@ export default function TaskForm({ id = 'task-form', task, subjects, onSubmit })
 
   const submit = async (values) => {
     try {
-      await onSubmit(toBody(values, isEdit))
+      await onSubmit(toBody(values, isEdit, locked))
     } catch (err) {
       const fields = fieldErrors(err)
       const known = Object.keys(toFormValues())
@@ -74,6 +110,8 @@ export default function TaskForm({ id = 'task-form', task, subjects, onSubmit })
     <form id={id} onSubmit={handleSubmit(submit)} className="grid gap-4 sm:grid-cols-2" noValidate>
       {errors.root && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{errors.root.message}</p>}
 
+      {locked ? <TeacherTaskInfo task={task} /> : (
+        <>
       <div className="sm:col-span-2">
         <label className="label" htmlFor="title">Title</label>
         <input id="title" className={cls('title')} placeholder="e.g. DBMS assignment 3"
@@ -104,8 +142,11 @@ export default function TaskForm({ id = 'task-form', task, subjects, onSubmit })
         {errors.due_date && <p className="field-error">{errors.due_date.message}</p>}
       </div>
 
+        </>
+      )}
+
       <div>
-        <label className="label" htmlFor="estimated_hours">Estimated hours</label>
+        <label className="label" htmlFor="estimated_hours">{locked ? 'My estimate (hours)' : 'Estimated hours'}</label>
         <input id="estimated_hours" type="number" step="0.5" min="0.5" inputMode="decimal" className={cls('estimated_hours')}
           {...register('estimated_hours', {
             required: 'How long will it take?',
@@ -114,12 +155,17 @@ export default function TaskForm({ id = 'task-form', task, subjects, onSubmit })
         {errors.estimated_hours && <p className="field-error">{errors.estimated_hours.message}</p>}
       </div>
 
+      {!locked && (
+        <>
       <div>
         <label className="label" htmlFor="difficulty">Difficulty</label>
         <select id="difficulty" className={cls('difficulty')} {...register('difficulty')}>
           {LEVELS.map((n) => <option key={n} value={n}>{n}{n === 1 ? ' – easy' : n === 5 ? ' – very hard' : ''}</option>)}
         </select>
       </div>
+
+        </>
+      )}
 
       <div>
         <label className="label" htmlFor="priority">Priority</label>
@@ -132,7 +178,10 @@ export default function TaskForm({ id = 'task-form', task, subjects, onSubmit })
         <label className="label" htmlFor="start_date">Start date <span className="font-normal text-slate-400">(optional)</span></label>
         <input id="start_date" type="date" className={cls('start_date')}
           {...register('start_date', {
-            validate: (v, all) => !v || !all.due_date || v <= all.due_date.slice(0, 10) || 'Start must be on or before the due date',
+            validate: (v, all) => {
+              const due = locked ? toIstInput(task.due_date) : all.due_date
+              return !v || !due || v <= due.slice(0, 10) || 'Start must be on or before the due date'
+            },
           })} />
         {errors.start_date && <p className="field-error">{errors.start_date.message}</p>}
         {!errors.start_date && !startDate && <p className="mt-1 text-xs text-slate-500">Leave empty to start today.</p>}
