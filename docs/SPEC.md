@@ -254,6 +254,14 @@ header `Authorization: Bearer <token>`.
 > rules, alert generation, planner priority score). Paste the original section here.
 > Known from other sections: heatmap colours use load ratio green < 0.7, amber 0.7–1.0,
 > red > 1.0, dark red > 1.3.
+>
+> **(ASSUMED) interim rule implemented in `services/workload_engine.py`:** each open task's
+> `estimated_hours` is spread evenly from max(today, start_date) to its due day inclusive;
+> overdue open tasks put all their hours on today; done tasks add nothing.
+> `load_ratio = hours_required / hours_available` (null when work is due on a 0-hour day);
+> `rule_label`: low < 0.7 ≤ medium ≤ 1.0 < high. `workload_summary` = the next 7 days of these
+> rows plus `overloaded_days`. Task create/update respond with
+> `{"task": {...}, "workload_summary": {...}}`.
 
 ## 10. ML plan
 
@@ -364,7 +372,7 @@ must answer "Am I in trouble this week, and what should I do next?" in one glanc
 >
 > 1. Backend foundation: app factory, config, all seven models + migration, error format,
 >    health, auth, subjects, availability, pytest. ✅
-> 2. Task CRUD + filters.
+> 2. Task CRUD + filters (with interim workload_summary). ✅
 > 3. Rule engine (section 9): workload, conflicts, alerts, snapshots + `test_engine.py`.
 > 4. Planner + `test_planner.py`.
 > 5. ML: dataset generator, features, training, `ml_service` fallback, `/api/predict`, notebooks.
