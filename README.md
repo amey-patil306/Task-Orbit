@@ -104,8 +104,8 @@ You need **two terminals**: one for the backend (port 5000) and one for the fron
 ### 3.1 Clone
 
 ```bash
-git clone <repo-url>
-cd task-orbit
+git clone https://github.com/amey-patil306/Task-Orbit.git
+cd Task-Orbit
 ```
 
 ### 3.2 Backend
@@ -328,7 +328,7 @@ Full metrics, confusion matrices, feature importances and figures are in
 ## 7. Project structure
 
 ```
-task-orbit/
+Task-Orbit/
 ├── README.md                 ← this file
 ├── CLAUDE.md                 # notes for AI coding assistants
 ├── docs/
