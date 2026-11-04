@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { errorMessage } from '../api/client'
 import Icon from './Icons'
 
@@ -15,7 +16,9 @@ export default function Modal({ open, title, onClose, children, footer, size = '
     const onKey = (e) => e.key === 'Escape' && onCloseRef.current()
     document.addEventListener('keydown', onKey)
     const previous = document.activeElement
-    panelRef.current?.querySelector('input, select, textarea, button')?.focus()
+    // Start in the first form field; fall back to the first button (e.g. confirm dialogs).
+    const panel = panelRef.current
+    ;(panel?.querySelector('input:not([type=hidden]), select, textarea') ?? panel?.querySelector('.border-t button, button'))?.focus()
     return () => {
       document.removeEventListener('keydown', onKey)
       previous?.focus?.()
@@ -23,21 +26,23 @@ export default function Modal({ open, title, onClose, children, footer, size = '
   }, [open])
 
   if (!open) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4"
+  // Portal to <body>, so an animated (transformed) page wrapper can never trap the fixed overlay.
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex animate-fade-in items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="modal-title"
-        className={`flex max-h-[92vh] w-full ${size} flex-col rounded-t-2xl bg-white shadow-xl sm:rounded-2xl`}>
+        className={`flex max-h-[92vh] w-full ${size} animate-slide-up flex-col rounded-t-3xl bg-surface shadow-2xl shadow-slate-900/20 ring-1 ring-slate-900/5 sm:animate-scale-in sm:rounded-2xl`}>
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 id="modal-title" className="text-lg font-semibold">{title}</h2>
-          <button type="button" className="btn-ghost" onClick={onClose} aria-label="Close">
+          <h2 id="modal-title" className="text-lg font-bold">{title}</h2>
+          <button type="button" className="btn-ghost rounded-full transition hover:rotate-90" onClick={onClose} aria-label="Close">
             <Icon name="x" />
           </button>
         </div>
         <div className="overflow-y-auto px-5 py-4">{children}</div>
         {footer && <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-3">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

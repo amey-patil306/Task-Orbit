@@ -60,5 +60,5 @@ export const LOAD_STYLES = {
   low: { label: 'Light', badge: 'bg-green-100 text-green-800 ring-green-600/20', cell: 'bg-load-low' },
   medium: { label: 'Busy', badge: 'bg-amber-100 text-amber-800 ring-amber-600/20', cell: 'bg-load-medium' },
   high: { label: 'Overloaded', badge: 'bg-red-100 text-red-800 ring-red-600/20', cell: 'bg-load-high' },
-  critical: { label: 'Severely overloaded', badge: 'bg-red-900 text-white ring-red-900/20', cell: 'bg-load-critical' },
+  critical: { label: 'Severely overloaded', badge: 'bg-load-critical text-white ring-black/10', cell: 'bg-load-critical' },
 }

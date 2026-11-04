@@ -1,3 +1,4 @@
+import { usePageTitle } from '../../components/PageHeader'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { teacherApi } from '../../api/teacher'
@@ -6,6 +7,7 @@ import Modal, { ConfirmDialog } from '../../components/Modal'
 import { QueryState } from '../../components/States'
 import AssignmentForm from '../../components/teacher/AssignmentForm'
 import { useAssignment, useTeacherMutation } from '../../hooks/useTeacher'
+import { useToast } from '../../components/Toast'
 import { TASK_STATUSES, TASK_TYPES, labelOf } from '../../lib/constants'
 import { formatDateTime, relativeDue } from '../../lib/dates'
 
@@ -31,6 +33,7 @@ export default function AssignmentDetailPage() {
   const query = useAssignment(Number(id))
   const update = useTeacherMutation((body) => teacherApi.updateAssignment(Number(id), body))
   const remove = useTeacherMutation(() => teacherApi.deleteAssignment(Number(id)))
+  const toast = useToast()
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -44,7 +47,8 @@ export default function AssignmentDetailPage() {
           </Link>
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{a.title}</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{a.title}</h1>
+              <PageTitle title={a.title} />
               <p className="mt-1 text-sm text-slate-500">
                 {labelOf(TASK_TYPES, a.type)} · difficulty {a.difficulty} · due {formatDateTime(a.due_date)} ({relativeDue(a.due_date)})
               </p>
@@ -69,7 +73,7 @@ export default function AssignmentDetailPage() {
               hint={a.hours_ratio ? `Students took ${a.hours_ratio}x your estimate` : 'Appears as students finish'} />
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-surface shadow-sm">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                 <tr>
@@ -116,7 +120,7 @@ export default function AssignmentDetailPage() {
                   who changed their own estimate keep it.
                 </p>
                 <AssignmentForm classId={a.classroom.id} assignment={a}
-                  onSubmit={async (body) => { await update.mutateAsync(body); setEditing(false) }} />
+                  onSubmit={async (body) => { await update.mutateAsync(body); toast('Assignment updated', { description: 'Students have been notified of any changes.' }); setEditing(false) }} />
               </>
             )}
           </Modal>
@@ -125,6 +129,7 @@ export default function AssignmentDetailPage() {
             message={`"${a.title}" will be removed from all ${a.students} students' task lists, including their logged hours.`}
             onConfirm={async () => {
               await remove.mutateAsync()
+              toast('Assignment deleted', { tone: 'info' })
               navigate(`/teacher/classes/${a.classroom.id}?tab=assignments`, { replace: true })
             }}
             onClose={() => setDeleting(false)} />
@@ -132,4 +137,10 @@ export default function AssignmentDetailPage() {
       )}
     </QueryState>
   )
+}
+
+/** Renders nothing; sets the tab title from inside the data-loaded branch. */
+function PageTitle({ title }) {
+  usePageTitle(title)
+  return null
 }

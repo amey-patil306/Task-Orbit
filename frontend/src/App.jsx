@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import ProtectedRoute, { PublicOnlyRoute } from './components/ProtectedRoute'
@@ -25,10 +25,20 @@ const page = (Component) => <Suspense fallback={<Spinner />}><Component /></Susp
 
 function NotFound() {
   const { user } = useAuth()
+  useEffect(() => { document.title = 'Page not found · Task Orbit' }, [])
   return (
-    <div className="py-20 text-center">
-      <p className="text-lg font-semibold">Page not found</p>
-      <Link to={homeFor(user)} className="btn-primary mt-4">Back to dashboard</Link>
+    <div className="flex flex-col items-center py-16 text-center">
+      {/* A planet that drifted out of orbit */}
+      <div className="relative h-40 w-40">
+        <div className="absolute inset-0 rounded-full border-2 border-dashed border-slate-300" />
+        <div className="absolute inset-6 rounded-full border border-dashed border-slate-200" />
+        <div className="absolute inset-[38%] rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/40" />
+        <div className="absolute -right-6 -top-2 h-6 w-6 animate-float rounded-full bg-gradient-to-br from-amber-300 to-orange-500 shadow-lg shadow-orange-500/40" />
+      </div>
+      <p className="mt-6 text-6xl font-extrabold tracking-tight text-gradient">404</p>
+      <p className="mt-2 text-lg font-semibold">This page drifted out of orbit</p>
+      <p className="mt-1 text-sm text-slate-500">The link may be old, or the page was moved.</p>
+      <Link to={homeFor(user)} className="btn-primary mt-6">Back to dashboard</Link>
     </div>
   )
 }

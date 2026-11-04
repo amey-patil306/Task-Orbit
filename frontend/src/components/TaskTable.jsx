@@ -37,23 +37,23 @@ function Actions({ task, onComplete, onEdit, onDelete, onExtend }) {
   return (
     <div className="flex justify-end gap-1">
       {task.status !== 'done' && (
-        <button type="button" className="btn-ghost text-green-700" onClick={() => onComplete(task)}
+        <button type="button" className="btn-ghost text-green-700 hover:bg-green-50 hover:text-green-800" onClick={() => onComplete(task)}
           aria-label={`Mark ${task.title} done`} title="Mark done">
           <Icon name="check" className="h-4 w-4" />
         </button>
       )}
-      <button type="button" className="btn-ghost" onClick={() => onEdit(task)} aria-label={`Edit ${task.title}`} title="Edit">
+      <button type="button" className="btn-ghost hover:bg-indigo-50 hover:text-indigo-700" onClick={() => onEdit(task)} aria-label={`Edit ${task.title}`} title="Edit">
         <Icon name="edit" className="h-4 w-4" />
       </button>
       {task.from_teacher ? (
         task.status !== 'done' && (
-          <button type="button" className="btn-ghost text-amber-700" onClick={() => onExtend(task)}
+          <button type="button" className="btn-ghost text-amber-700 hover:bg-amber-50" onClick={() => onExtend(task)}
             aria-label={`Ask for more time on ${task.title}`} title="Ask for more time">
             <Icon name="clock" className="h-4 w-4" />
           </button>
         )
       ) : (
-        <button type="button" className="btn-ghost text-red-600" onClick={() => onDelete(task)}
+        <button type="button" className="btn-ghost text-red-600 hover:bg-red-50" onClick={() => onDelete(task)}
           aria-label={`Delete ${task.title}`} title="Delete">
           <Icon name="trash" className="h-4 w-4" />
         </button>
@@ -66,7 +66,7 @@ export default function TaskTable({ tasks, subjects, ...handlers }) {
   return (
     <>
       {/* Phones: cards */}
-      <ul className="space-y-3 md:hidden">
+      <ul className="stagger space-y-3 md:hidden">
         {tasks.map((t) => (
           <li key={t.id} className={`card ${t.status === 'done' ? 'opacity-70' : ''}`}>
             <div className="flex items-start gap-2">
@@ -90,7 +90,7 @@ export default function TaskTable({ tasks, subjects, ...handlers }) {
       </ul>
 
       {/* Desktop: table */}
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+      <div className="hidden overflow-hidden rounded-2xl border border-slate-200/80 bg-surface shadow-sm md:block">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
             <tr>
@@ -103,9 +103,9 @@ export default function TaskTable({ tasks, subjects, ...handlers }) {
               <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="stagger divide-y divide-slate-100">
             {tasks.map((t) => (
-              <tr key={t.id} className={t.status === 'done' ? 'text-slate-400' : ''}>
+              <tr key={t.id} className={`transition-colors hover:bg-slate-50/80 ${t.status === 'done' ? 'text-slate-400' : ''}`}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Dot task={t} subjects={subjects} />

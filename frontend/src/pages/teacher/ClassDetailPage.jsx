@@ -1,3 +1,4 @@
+import { usePageTitle } from '../../components/PageHeader'
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -8,6 +9,7 @@ import { EmptyState, QueryState } from '../../components/States'
 import AssignmentForm from '../../components/teacher/AssignmentForm'
 import ClassHeatmap from '../../components/teacher/ClassHeatmap'
 import { useClassAnalytics, useTeacherMutation } from '../../hooks/useTeacher'
+import { celebrate, useToast } from '../../components/Toast'
 import { RISK_STYLES, TASK_TYPES, labelOf } from '../../lib/constants'
 import { formatDate, formatDay, relativeDue } from '../../lib/dates'
 import { ClassFormModal, JoinCode } from './TeacherClassesPage'
@@ -79,7 +81,7 @@ function StressChart({ trend }) {
 function Overview({ data }) {
   const risky = data.roster.filter((r) => r.risk === 'high')
   return (
-    <div className="space-y-6">
+    <div className="stagger space-y-6">
       <div className="grid gap-6 lg:grid-cols-5">
         <section className="card lg:col-span-3">
           <h2 className="font-semibold">Class workload, next 4 weeks</h2>
@@ -132,7 +134,7 @@ function AssignmentsTab({ classId, assignments, onNew }) {
       action={<button type="button" className="btn-primary" onClick={onNew}>New assignment</button>} />
   }
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-surface shadow-sm">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
         <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
           <tr>
@@ -181,11 +183,12 @@ function AssignmentsTab({ classId, assignments, onNew }) {
 
 function StudentsTab({ classId, roster }) {
   const remove = useTeacherMutation(({ sid }) => teacherApi.removeStudent(classId, sid))
+  const toast = useToast()
   const [removing, setRemoving] = useState(null)
   if (!roster.length) return <EmptyState title="No students yet" message="Share the class code so students can join." />
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-surface shadow-sm">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
             <tr>
@@ -226,7 +229,7 @@ function StudentsTab({ classId, roster }) {
       </p>
       <ConfirmDialog open={Boolean(removing)} title="Remove student?" confirmLabel="Remove" busy={remove.isPending}
         message={`${removing?.name} will leave this class and their unfinished tasks from it will be removed.`}
-        onConfirm={async () => { await remove.mutateAsync({ sid: removing.id }); setRemoving(null) }}
+        onConfirm={async () => { await remove.mutateAsync({ sid: removing.id }); toast(`Removed ${removing.name}`, { tone: 'info' }); setRemoving(null) }}
         onClose={() => setRemoving(null)} />
     </>
   )
@@ -245,6 +248,7 @@ export default function ClassDetailPage() {
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const create = useTeacherMutation((body) => teacherApi.createAssignment(classId, body))
+  const toast = useToast()
   const removeClass = useTeacherMutation(() => teacherApi.deleteClassroom(classId))
 
   return (
@@ -260,7 +264,8 @@ export default function ClassDetailPage() {
               <div className="flex items-start gap-3">
                 <span className="mt-2 h-3.5 w-3.5 rounded-full" style={{ backgroundColor: c.colour }} />
                 <div>
-                  <h1 className="text-2xl font-semibold tracking-tight">{c.name}</h1>
+                  <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{c.name}</h1>
+                  <PageTitle title={c.name} />
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-slate-500">
                     <span>{c.students_count} students</span>
                     <span className="flex items-center gap-2">Join code <JoinCode code={c.join_code} /></span>
@@ -305,6 +310,8 @@ export default function ClassDetailPage() {
               </>}>
               {newOpen && <AssignmentForm classId={classId} onSubmit={async (body) => {
                 await create.mutateAsync(body)
+                celebrate()
+                toast('Assignment posted', { description: `${body.title} · sent to ${c.students_count} students` })
                 setNewOpen(false)
                 setParams({ tab: 'assignments' }, { replace: true })
               }} />}
@@ -313,11 +320,17 @@ export default function ClassDetailPage() {
             {editing && <ClassFormModal open classroom={c} onClose={() => setEditing(false)} />}
             <ConfirmDialog open={deleting} title="Delete class?" busy={removeClass.isPending}
               message={`"${c.name}" and all its assignments will be deleted, including students' copies. This cannot be undone.`}
-              onConfirm={async () => { await removeClass.mutateAsync(); navigate('/teacher/classes', { replace: true }) }}
+              onConfirm={async () => { await removeClass.mutateAsync(); toast(`Deleted ${c.name}`, { tone: 'info' }); navigate('/teacher/classes', { replace: true }) }}
               onClose={() => setDeleting(false)} />
           </>
         )
       }}
     </QueryState>
   )
+}
+
+/** Renders nothing; sets the tab title from inside the data-loaded branch. */
+function PageTitle({ title }) {
+  usePageTitle(title)
+  return null
 }

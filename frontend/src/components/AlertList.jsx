@@ -14,12 +14,12 @@ export default function AlertList({ alerts, compact = false }) {
   const markRead = useMarkAlertRead()
 
   return (
-    <ul className="space-y-2">
+    <ul className="stagger space-y-2">
       {alerts.map((a) => {
         const s = SEVERITY[a.severity]
         return (
           <li key={a.id}
-            className={`flex items-start gap-3 rounded-lg border border-l-4 border-slate-200 bg-white p-3 ${s.bar} ${a.is_read ? 'opacity-60' : ''}`}>
+            className={`flex items-start gap-3 rounded-lg border border-l-4 border-slate-200 bg-surface p-3 ${s.bar} ${a.is_read ? 'opacity-60' : ''}`}>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className={`rounded-full px-2 py-0.5 font-medium ${s.badge}`}>{s.label}</span>

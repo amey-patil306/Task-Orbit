@@ -78,7 +78,7 @@ function DeadlineAdvisor({ advice, onPick }) {
           <div className="mt-1.5 flex flex-wrap gap-2">
             {alternatives.map((a) => (
               <button key={a.date} type="button" onClick={() => onPick(a.date)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm hover:border-indigo-400 hover:bg-indigo-50">
+                className="rounded-lg border border-slate-200 bg-surface px-3 py-2 text-left text-sm hover:border-indigo-400 hover:bg-indigo-50">
                 <span className="block font-medium">{formatDay(a.date)}</span>
                 <span className="block text-xs text-slate-500">
                   {Math.round(a.pct_overloaded * 100)}% overloaded{a.clashes.length ? ` · ${a.clashes.length} clash` : ' · no clashes'}

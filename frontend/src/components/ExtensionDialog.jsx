@@ -3,10 +3,12 @@ import { errorMessage, fieldErrors } from '../api/client'
 import { useRequestExtension } from '../hooks/useClassrooms'
 import { formatDateTime, fromIstInput, toIstInput } from '../lib/dates'
 import Modal from './Modal'
+import { useToast } from './Toast'
 
 /** Student asks the teacher for more time; the server attaches workload evidence automatically. */
 export default function ExtensionDialog({ task, onClose }) {
   const request = useRequestExtension()
+  const toast = useToast()
   const [reason, setReason] = useState('')
   const [due, setDue] = useState('')
   const [errors, setErrors] = useState({})
@@ -32,6 +34,7 @@ export default function ExtensionDialog({ task, onClose }) {
     try {
       await request.mutateAsync({ taskId: task.id, body: { reason: reason.trim(), requested_due: fromIstInput(due) } })
       setSent(true)
+      toast('Extension request sent', { description: `To ${task.from_teacher?.teacher_name}` })
     } catch (err) {
       const f = fieldErrors(err)
       setErrors(Object.keys(f).length ? f : { root: errorMessage(err) })

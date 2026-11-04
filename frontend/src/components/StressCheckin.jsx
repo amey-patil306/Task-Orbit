@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useCheckins, useSaveCheckin } from '../hooks/useClassrooms'
+import { useToast } from './Toast'
 
 const LEVELS = [
   { value: 1, label: 'Relaxed', cls: 'hover:bg-green-50 aria-checked:bg-green-600' },
@@ -13,6 +14,7 @@ const LEVELS = [
 export default function StressCheckin() {
   const checkins = useCheckins()
   const save = useSaveCheckin()
+  const toast = useToast()
   const [editing, setEditing] = useState(false)
 
   if (!checkins.data) return null
@@ -46,7 +48,7 @@ export default function StressCheckin() {
         {LEVELS.map((l) => (
           <button key={l.value} type="button" role="radio" aria-checked={current?.stress === l.value}
             disabled={save.isPending}
-            onClick={async () => { await save.mutateAsync({ stress: l.value }); setEditing(false) }}
+            onClick={async () => { await save.mutateAsync({ stress: l.value }); setEditing(false); toast('Thanks for checking in', { description: 'It helps the forecasts get better.' }) }}
             className={`rounded-lg border border-slate-200 px-1 py-2 text-center text-xs font-medium transition aria-checked:text-white ${l.cls}`}>
             <span className="block text-lg">{l.value}</span>{l.label}
           </button>

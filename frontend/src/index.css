@@ -2,32 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    /* Soft brand glow in the corners so pages don't look flat. */
+    background:
+      radial-gradient(60rem 40rem at 110% -10%, rgb(99 102 241 / 0.08), transparent 60%),
+      radial-gradient(50rem 35rem at -10% 110%, rgb(217 70 239 / 0.06), transparent 60%),
+      rgb(var(--c-slate-50));
+    background-attachment: fixed;
+  }
+  /* Smooth colour change when switching theme (not on first paint). */
+  html.theme-ready body, html.theme-ready .card, html.theme-ready aside, html.theme-ready header, html.theme-ready nav {
+    transition: background-color .3s ease, border-color .3s ease, color .3s ease;
+  }
+  .dark body {
+    background:
+      radial-gradient(60rem 40rem at 110% -10%, rgb(99 102 241 / 0.14), transparent 60%),
+      radial-gradient(50rem 35rem at -10% 110%, rgb(217 70 239 / 0.10), transparent 60%),
+      rgb(var(--c-slate-50));
+    background-attachment: fixed;
+  }
+  h1, h2, h3 { letter-spacing: -0.015em; }
+  ::selection { background: rgb(99 102 241 / 0.2); }
+}
+
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold
+      transition duration-150 ease-out active:scale-[.97]
       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2
-      disabled:cursor-not-allowed disabled:opacity-60;
+      disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
   }
-  .btn-primary { @apply btn bg-indigo-600 text-white hover:bg-indigo-700; }
-  .btn-secondary { @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50; }
-  .btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700; }
-  .btn-ghost { @apply btn px-2 py-1 text-slate-600 hover:bg-slate-100; }
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm shadow-indigo-500/30
+      hover:from-indigo-500 hover:to-violet-500 hover:shadow-md hover:shadow-indigo-500/30;
+  }
+  .btn-secondary { @apply btn border border-slate-300 bg-surface text-slate-700 hover:border-slate-400 hover:bg-slate-50; }
+  .btn-danger { @apply btn bg-red-600 text-white shadow-sm shadow-red-500/30 hover:bg-red-500; }
+  .btn-ghost { @apply btn px-2 py-1 font-medium text-slate-600 hover:bg-slate-100; }
 
   .input {
-    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm
-      placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500;
+    @apply block w-full rounded-lg border border-slate-300 bg-surface px-3 py-2 text-sm shadow-sm transition
+      placeholder:text-slate-400 hover:border-slate-400
+      focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15;
   }
-  .input-error { @apply border-red-500 focus:border-red-500 focus:ring-red-500; }
+  .input-error { @apply border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/15; }
   .label { @apply mb-1 block text-sm font-medium text-slate-700; }
-  .field-error { @apply mt-1 text-xs text-red-600; }
+  .field-error { @apply mt-1 animate-fade-in text-xs text-red-600; }
 
-  .card { @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5; }
+  .card {
+    @apply rounded-2xl border border-slate-200/80 bg-surface p-4 shadow-sm shadow-slate-200/50
+      transition duration-200 sm:p-5;
+  }
+  .card-hover { @apply hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70; }
+  .glass { @apply border border-slate-200/60 bg-surface/75 shadow-xl shadow-indigo-900/5 backdrop-blur-xl; }
+
+  .skeleton {
+    @apply rounded-md bg-slate-200/70;
+    background-image: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.7) 50%, transparent 100%);
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent;
+  }
+}
+
+@layer utilities {
+  /* Children fade up one after another. Pure CSS, so any list or page section can use it. */
+  .stagger > * { animation: fade-up .45s cubic-bezier(.2,.7,.2,1) backwards; }
+  .stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .stagger > *:nth-child(3) { animation-delay: 120ms; }
+  .stagger > *:nth-child(4) { animation-delay: 180ms; }
+  .stagger > *:nth-child(5) { animation-delay: 240ms; }
+  .stagger > *:nth-child(6) { animation-delay: 300ms; }
+  .stagger > *:nth-child(n+7) { animation-delay: 360ms; }
+
+  /* Pop-in driven by a per-item index: style={{ '--i': index }} */
+  .pop-seq { animation: pop .4s cubic-bezier(.2,.7,.2,1) backwards; animation-delay: calc(var(--i, 0) * 18ms); }
+}
+
+/* Respect the OS "reduce motion" setting everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* FullCalendar tweaks to match the app */
 .fc { --fc-border-color: #e2e8f0; --fc-today-bg-color: #eef2ff; --fc-button-bg-color: #4f46e5;
   --fc-button-border-color: #4f46e5; --fc-button-hover-bg-color: #4338ca; --fc-button-hover-border-color: #4338ca;
   --fc-button-active-bg-color: #3730a3; --fc-button-active-border-color: #3730a3; font-size: 0.85rem; }
-.fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 600; }
-.fc .fc-event { cursor: pointer; padding: 1px 3px; border-radius: 4px; }
+.fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; }
+.fc .fc-button { border-radius: 0.5rem; font-weight: 600; }
+.fc .fc-event { cursor: pointer; padding: 1px 3px; border-radius: 4px; transition: transform .15s; }
+.fc .fc-event:hover { transform: translateY(-1px); }
 .fc .fc-conflict-day { box-shadow: inset 0 0 0 2px #dc2626; background-color: #fef2f2; }
+
+@keyframes grow { from { transform: scaleX(0); } }
+
+/* Dark theme for the libraries that use hard-coded colours */
+.dark .fc { --fc-border-color: rgb(var(--c-slate-200)); --fc-today-bg-color: rgb(var(--c-indigo-50));
+  --fc-page-bg-color: rgb(var(--c-surface)); --fc-neutral-bg-color: rgb(var(--c-slate-100)); --fc-list-event-hover-bg-color: rgb(var(--c-slate-100)); }
+.dark .fc .fc-conflict-day { background-color: rgb(var(--c-red-50)); }
+.dark .recharts-cartesian-grid line { stroke: rgb(var(--c-slate-200)); }
+.dark .recharts-text, .dark .recharts-cartesian-axis-tick-value { fill: rgb(var(--c-slate-500)); }
+.dark .recharts-default-tooltip { background: rgb(var(--c-surface)) !important; border-color: rgb(var(--c-slate-200)) !important; }
+.dark .recharts-legend-item-text { color: rgb(var(--c-slate-600)) !important; }
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(.8); }

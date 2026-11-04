@@ -7,11 +7,13 @@ import Modal from '../../components/Modal'
 import PageHeader from '../../components/PageHeader'
 import { EmptyState, QueryState } from '../../components/States'
 import { useTeacherClassrooms, useTeacherMutation } from '../../hooks/useTeacher'
+import { useToast } from '../../components/Toast'
 import { SUBJECT_COLOURS } from '../../lib/constants'
 
 export function ClassFormModal({ open, classroom, onClose, onSaved }) {
   const create = useTeacherMutation(teacherApi.createClassroom)
   const update = useTeacherMutation(({ id, body }) => teacherApi.updateClassroom(id, body))
+  const toast = useToast()
   const [subject, setSubject] = useState(classroom?.subject_name ?? '')
   const [name, setName] = useState(classroom?.name ?? '')
   const [colour, setColour] = useState(classroom?.colour ?? SUBJECT_COLOURS[0])
@@ -28,6 +30,7 @@ export function ClassFormModal({ open, classroom, onClose, onSaved }) {
       const body = { subject_name: subject.trim(), name: name.trim(), colour }
       const saved = classroom ? await update.mutateAsync({ id: classroom.id, body }) : await create.mutateAsync(body)
       onSaved?.(saved)
+      toast(classroom ? 'Class updated' : `Class created · code ${saved.join_code}`, { description: classroom ? undefined : 'Share the code with your students.' })
       onClose()
     } catch (err) {
       setError(errorMessage(err))
@@ -83,7 +86,7 @@ export function JoinCode({ code }) {
   }
   return (
     <button type="button" onClick={copy} title="Copy class code"
-      className="inline-flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-1.5 font-mono text-sm tracking-widest hover:border-indigo-400">
+      className="inline-flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-surface px-3 py-1.5 font-mono text-sm tracking-widest hover:border-indigo-400">
       {code} <Icon name={copied ? 'check' : 'copy'} className="h-4 w-4 text-slate-400" />
     </button>
   )
@@ -111,10 +114,10 @@ export default function TeacherClassesPage() {
       <QueryState query={classes} loadingLabel="Loading classes…"
         empty={<EmptyState title="No classes yet" message="Create a class for each subject and division you teach." action={newButton} />}>
         {(list) => (
-          <ul className="grid gap-4 sm:grid-cols-2">
+          <ul className="stagger grid gap-4 sm:grid-cols-2">
             {list.map((c) => (
               <li key={c.id}>
-                <Link to={`/teacher/classes/${c.id}`} className="card block transition hover:border-indigo-300 hover:shadow">
+                <Link to={`/teacher/classes/${c.id}`} className="card card-hover block">
                   <div className="flex items-start gap-3">
                     <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.colour }} />
                     <div className="min-w-0 flex-1">

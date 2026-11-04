@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { errorMessage, fieldErrors } from '../api/client'
 import Icon from '../components/Icons'
 import { ConfirmDialog } from '../components/Modal'
+import { useToast } from '../components/Toast'
 import PageHeader from '../components/PageHeader'
 import { EmptyState, QueryState } from '../components/States'
 import { useJoinClass, useLeaveClass, useMyClassrooms, useMyExtensions } from '../hooks/useClassrooms'
@@ -16,6 +17,7 @@ const STATUS = {
 
 function JoinForm() {
   const join = useJoinClass()
+  const toast = useToast()
   const [code, setCode] = useState('')
   const [error, setError] = useState(null)
   const [joined, setJoined] = useState(null)
@@ -32,6 +34,7 @@ function JoinForm() {
       const c = await join.mutateAsync(code.trim().toUpperCase())
       setJoined(c)
       setCode('')
+      toast(`Joined ${c.name}`, { description: 'Its upcoming work is now in your tasks.' })
     } catch (err) {
       // e.g. "No class with that code. Check the code with your teacher."
       const hint = fieldErrors(err).code
@@ -59,6 +62,7 @@ function JoinForm() {
 function ClassList() {
   const classes = useMyClassrooms()
   const leave = useLeaveClass()
+  const toast = useToast()
   const [leaving, setLeaving] = useState(null)
 
   return (
@@ -66,10 +70,10 @@ function ClassList() {
       <QueryState query={classes} loadingLabel="Loading your classes…"
         empty={<EmptyState title="You haven't joined any classes yet" message="Ask your teachers for their class codes." />}>
         {(list) => (
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="stagger grid gap-3 sm:grid-cols-2">
             {list.map((c) => (
-              <li key={c.id} className="card flex items-start gap-3">
-                <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.colour }} />
+              <li key={c.id} className="card card-hover flex items-start gap-3">
+                <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.colour, boxShadow: `0 0 0 4px ${c.colour}22` }} />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{c.name}</p>
                   <p className="text-sm text-slate-500">{c.teacher_name} · {c.students_count} students · {c.assignments_count} assignments</p>
@@ -82,7 +86,7 @@ function ClassList() {
       </QueryState>
       <ConfirmDialog open={Boolean(leaving)} title="Leave class?" confirmLabel="Leave" busy={leave.isPending}
         message={`You'll stop getting work from ${leaving?.name}. Unfinished tasks from this class will be removed.`}
-        onConfirm={async () => { await leave.mutateAsync(leaving.id); setLeaving(null) }}
+        onConfirm={async () => { await leave.mutateAsync(leaving.id); toast(`Left ${leaving.name}`, { tone: 'info' }); setLeaving(null) }}
         onClose={() => setLeaving(null)} />
     </>
   )
@@ -122,7 +126,7 @@ export default function ClassesPage() {
           <p className="mt-1">Join your classes with the codes from your teachers, then set your study hours in Settings.</p>
         </div>
       )}
-      <div className="space-y-6">
+      <div className="stagger space-y-6">
         <JoinForm />
         <ClassList />
         <section className="card">

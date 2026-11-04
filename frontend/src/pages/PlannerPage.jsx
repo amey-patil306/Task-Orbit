@@ -3,6 +3,7 @@ import { errorMessage } from '../api/client'
 import Icon from '../components/Icons'
 import PageHeader from '../components/PageHeader'
 import { EmptyState, QueryState } from '../components/States'
+import { celebrate, useToast } from '../components/Toast'
 import { useGeneratePlan, usePlan, useTickSession } from '../hooks/usePlan'
 import { useSubjectMap } from '../hooks/useSubjects'
 import { formatDay, istToday } from '../lib/dates'
@@ -15,11 +16,12 @@ function groupByDay(sessions) {
 
 function SessionList({ sessions }) {
   const tick = useTickSession()
+  const toast = useToast()
   const subjects = useSubjectMap()
   const today = istToday()
 
   return (
-    <div className="space-y-4">
+    <div className="stagger space-y-4">
       {groupByDay(sessions).map(([day, items]) => {
         const total = items.reduce((sum, s) => sum + s.planned_hours, 0)
         const isPast = day < today
@@ -35,10 +37,13 @@ function SessionList({ sessions }) {
             <ul className="divide-y divide-slate-100">
               {items.map((s) => (
                 <li key={s.id}>
-                  <label className="flex cursor-pointer items-center gap-3 py-2.5">
+                  <label className="-mx-2 flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2.5 transition hover:bg-slate-50">
                     <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                       checked={s.done} disabled={tick.isPending}
-                      onChange={(e) => tick.mutate({ id: s.id, done: e.target.checked })} />
+                      onChange={(e) => {
+                        const done = e.target.checked
+                        tick.mutate({ id: s.id, done }, { onSuccess: () => { if (done) { celebrate(); toast('Session done', { description: `${s.planned_hours} h on ${s.task_title ?? 'this task'}` }) } } })
+                      }} />
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: s.class_colour ?? subjects[s.subject_id]?.colour ?? '#CBD5E1' }} />
                     <span className={`flex-1 text-sm ${s.done ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{s.task_title}
                       {s.class_name && <span className="ml-2 text-xs text-slate-400">{s.class_name}</span>}</span>

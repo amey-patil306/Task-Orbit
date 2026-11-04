@@ -11,7 +11,7 @@ export default function AlertsPage() {
   return (
     <>
       <PageHeader title="Alerts" subtitle="Overloaded days, deadline clashes and upcoming deadlines" />
-      <div className="mb-4 inline-flex rounded-lg border border-slate-200 bg-white p-1 text-sm">
+      <div className="mb-4 inline-flex rounded-lg border border-slate-200 bg-surface p-1 text-sm">
         {[[false, 'All'], [true, 'Unread']].map(([value, label]) => (
           <button key={label} type="button" onClick={() => setUnreadOnly(value)}
             className={`rounded-md px-3 py-1.5 font-medium ${unreadOnly === value ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>

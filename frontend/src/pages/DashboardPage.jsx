@@ -1,17 +1,19 @@
 import { Link } from 'react-router-dom'
 import AlertList from '../components/AlertList'
 import Heatmap from '../components/Heatmap'
-import LoadBadge from '../components/LoadBadge'
+import Icon from '../components/Icons'
+import LoadRing from '../components/LoadRing'
 import PageHeader from '../components/PageHeader'
 import RiskStrip from '../components/RiskStrip'
 import StressCheckin from '../components/StressCheckin'
-import { EmptyState, ErrorState, QueryState, Spinner } from '../components/States'
+import { EmptyState, ErrorState, QueryState } from '../components/States'
 import { useAuth } from '../context/AuthContext'
 import { useAlerts } from '../hooks/useAlerts'
 import { useSubjectMap } from '../hooks/useSubjects'
 import { useTasks } from '../hooks/useTasks'
+import useCountUp from '../hooks/useCountUp'
 import { usePredict, useWorkload } from '../hooks/useWorkload'
-import { TASK_TYPES, labelOf, taskColour, taskSubject } from '../lib/constants'
+import { LOAD_STYLES, TASK_TYPES, labelOf, loadLevel, taskColour, taskSubject } from '../lib/constants'
 import { daysUntil, relativeDue } from '../lib/dates'
 
 function greeting() {
@@ -24,36 +26,58 @@ function Section({ title, link, query, children, className = '' }) {
   return (
     <section className={`card ${className}`}>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold">{title}</h2>
-        {link && <Link to={link.to} className="text-sm text-indigo-600 hover:underline">{link.label}</Link>}
+        <h2 className="font-bold">{title}</h2>
+        {link && <Link to={link.to} className="group flex items-center gap-1 text-sm font-medium text-indigo-600">{link.label}<Icon name="arrowRight" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></Link>}
       </div>
-      {query?.isPending ? <Spinner className="py-6" />
+      {query?.isPending ? <div className="space-y-2 py-2"><span className="skeleton block h-4 w-3/4" /><span className="skeleton block h-4 w-1/2" /><span className="skeleton block h-4 w-2/3" /></div>
         : query?.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
         : children}
     </section>
   )
 }
 
-/** "Am I in trouble this week?" - answered by today's badge + the week's verdict. */
+/** "Am I in trouble this week?" - answered by today's gauge + the week's verdict. */
 function TodayCard({ workload, forecast }) {
   const today = workload[0]
+  const hours = useCountUp(today.hours_required, { decimals: 1 })
   const highDays = forecast?.days.filter((d) => d.risk === 'high').length ?? 0
+  const level = LOAD_STYLES[loadLevel(today.load_ratio)]
   const verdict = highDays === 0
-    ? { text: 'You are on track this week.', cls: 'text-green-700' }
-    : { text: `${highDays} high-risk day${highDays === 1 ? '' : 's'} this week. Check the planner.`, cls: 'text-red-700' }
+    ? 'You are on track this week.'
+    : `${highDays} high-risk day${highDays === 1 ? '' : 's'} this week. Check the planner.`
 
   return (
-    <section className="card flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-      <div>
-        <p className="text-sm text-slate-500">Today's load</p>
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <span className="text-3xl font-semibold tabular-nums">{today.hours_required} h</span>
-          <span className="text-sm text-slate-500">of {today.hours_available} h free</span>
-          <LoadBadge ratio={today.load_ratio} />
+    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 bg-[length:200%_200%] p-5 text-white shadow-xl shadow-indigo-500/25 animate-gradient-x sm:p-7">
+      {/* Decorative orbit rings */}
+      <svg viewBox="0 0 400 400" className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 opacity-25" aria-hidden="true">
+        <g className="animate-orbit" style={{ transformOrigin: '200px 200px', '--orbit-speed': '60s' }}>
+          <circle cx="200" cy="200" r="120" fill="none" stroke="white" strokeDasharray="4 8" />
+          <circle cx="320" cy="200" r="6" fill="white" />
+        </g>
+        <g className="animate-orbit-rev" style={{ transformOrigin: '200px 200px', '--orbit-speed': '90s' }}>
+          <circle cx="200" cy="200" r="180" fill="none" stroke="white" strokeDasharray="2 10" />
+          <circle cx="200" cy="20" r="4" fill="white" />
+        </g>
+      </svg>
+
+      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
+        <LoadRing ratio={today.load_ratio} />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-white/75">Today's load</p>
+          <p className="mt-1 text-4xl font-extrabold tabular-nums tracking-tight">
+            {hours} h <span className="text-base font-medium text-white/70">of {today.hours_available} h free</span>
+          </p>
+          <span className="mt-2 inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-inset ring-white/25 backdrop-blur">
+            {level.label}
+          </span>
+          <p className="mt-3 flex items-center gap-2 text-sm font-medium text-white/90">
+            <Icon name={highDays ? 'warning' : 'check'} className="h-4 w-4" />{verdict}
+          </p>
         </div>
-        <p className={`mt-2 text-sm font-medium ${verdict.cls}`}>{verdict.text}</p>
+        <Link to="/planner" className="btn group self-start bg-white text-[#4338ca] shadow-lg shadow-black/20 hover:bg-[#eef2ff] sm:self-center">
+          Open study plan <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
-      <Link to="/planner" className="btn-primary self-start sm:self-center">Open study plan</Link>
     </section>
   )
 }
@@ -70,12 +94,12 @@ function NextTasks({ tasks }) {
       action={<Link to="/tasks" className="btn-primary">Add a task</Link>} />
   }
   return (
-    <ol className="divide-y divide-slate-100">
+    <ol className="stagger -mx-2 divide-y divide-slate-100">
       {next.map((t) => {
         const n = daysUntil(t.due_date)
         return (
-          <li key={t.id} className="flex items-center gap-3 py-3">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: taskColour(t, subjects) }} />
+          <li key={t.id} className="flex items-center gap-3 rounded-lg px-2 py-3 transition hover:bg-slate-50">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: taskColour(t, subjects), boxShadow: `0 0 0 4px ${taskColour(t, subjects)}22` }} />
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{t.title}</p>
               <p className="text-xs text-slate-500">{taskSubject(t, subjects) ?? labelOf(TASK_TYPES, t.type)} · {t.estimated_hours} h · priority {t.priority}</p>
@@ -112,7 +136,7 @@ export default function DashboardPage() {
             <Link to="/settings" className="btn-secondary">Set study hours</Link>
           </div>} />
       ) : (
-        <div className="space-y-6">
+        <div className="stagger space-y-6">
           <QueryState query={workload} loadingLabel="Calculating today's load…">
             {(rows) => <TodayCard workload={rows} forecast={predict.data} />}
           </QueryState>

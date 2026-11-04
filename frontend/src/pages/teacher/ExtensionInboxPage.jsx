@@ -4,6 +4,7 @@ import { teacherApi } from '../../api/teacher'
 import PageHeader from '../../components/PageHeader'
 import { EmptyState, QueryState } from '../../components/States'
 import { useExtensionInbox, useTeacherMutation } from '../../hooks/useTeacher'
+import { useToast } from '../../components/Toast'
 import { formatDateTime, formatDay } from '../../lib/dates'
 
 const STATUS = {
@@ -38,6 +39,9 @@ function Evidence({ e }) {
 
 function RequestCard({ r }) {
   const decide = useTeacherMutation(({ status, note }) => teacherApi.decideExtension(r.id, { status, teacher_note: note || null }))
+  const toast = useToast()
+  const onDecided = (status) => toast(status === 'approved' ? 'Extension approved' : 'Extension rejected',
+    { tone: status === 'approved' ? 'success' : 'info', description: `${r.student_name} has been notified.` })
   const [note, setNote] = useState('')
 
   return (
@@ -64,9 +68,9 @@ function RequestCard({ r }) {
           {decide.isError && <p className="field-error">{errorMessage(decide.error)}</p>}
           <div className="flex gap-2">
             <button type="button" className="btn-primary" disabled={decide.isPending}
-              onClick={() => decide.mutate({ status: 'approved', note })}>Approve</button>
+              onClick={() => decide.mutate({ status: 'approved', note }, { onSuccess: () => onDecided('approved') })}>Approve</button>
             <button type="button" className="btn-secondary" disabled={decide.isPending}
-              onClick={() => decide.mutate({ status: 'rejected', note })}>Reject</button>
+              onClick={() => decide.mutate({ status: 'rejected', note }, { onSuccess: () => onDecided('rejected') })}>Reject</button>
           </div>
         </div>
       ) : (
@@ -83,7 +87,7 @@ export default function ExtensionInboxPage() {
   return (
     <>
       <PageHeader title="Extension requests" subtitle="Each request comes with the student's real workload, so you can decide fairly" />
-      <div className="mb-4 inline-flex rounded-lg border border-slate-200 bg-white p-1 text-sm">
+      <div className="mb-4 inline-flex rounded-lg border border-slate-200 bg-surface p-1 text-sm">
         {[['pending', 'Pending'], ['', 'All']].map(([value, label]) => (
           <button key={label} type="button" onClick={() => setStatus(value)}
             className={`rounded-md px-3 py-1.5 font-medium ${status === value ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
@@ -94,7 +98,7 @@ export default function ExtensionInboxPage() {
       <QueryState query={inbox} loadingLabel="Loading requests…"
         empty={<EmptyState title={status ? 'No pending requests' : 'No requests yet'}
           message="Students can ask for more time on your assignments; requests show up here." />}>
-        {(list) => <ul className="grid gap-4 lg:grid-cols-2">{list.map((r) => <RequestCard key={r.id} r={r} />)}</ul>}
+        {(list) => <ul className="stagger grid gap-4 lg:grid-cols-2">{list.map((r) => <RequestCard key={r.id} r={r} />)}</ul>}
       </QueryState>
     </>
   )

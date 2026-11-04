@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader'
 import { EmptyState, QueryState } from '../components/States'
 import TaskForm from '../components/TaskForm'
 import TaskTable from '../components/TaskTable'
+import { celebrate, useToast } from '../components/Toast'
 import { useSubjects } from '../hooks/useSubjects'
 import { useTaskMutations, useTasks } from '../hooks/useTasks'
 import { TASK_STATUSES, TASK_TYPES } from '../lib/constants'
@@ -48,6 +49,7 @@ export default function TasksPage() {
   const subjects = subjectsQuery.data ?? []
   const subjectMap = Object.fromEntries(subjects.map((s) => [s.id, s]))
   const { create, update, complete, remove } = useTaskMutations()
+  const toast = useToast()
 
   const isNew = editing && !editing.id
   const hasFilters = Object.values(filters).some(Boolean)
@@ -57,11 +59,13 @@ export default function TasksPage() {
     const result = isNew ? await create.mutateAsync(body) : await update.mutateAsync({ id: editing.id, body })
     setSummary(result.workload_summary)
     setEditing(null)
+    toast(isNew ? 'Task added' : 'Changes saved', { description: body.title ?? editing.title })
   }
 
   const confirmDelete = async () => {
     try {
       await remove.mutateAsync(deleting.id)
+      toast('Task deleted', { tone: 'info', description: deleting.title })
       setDeleting(null)
       setDeleteError(null)
     } catch (err) {
@@ -123,6 +127,8 @@ export default function TasksPage() {
       <CompleteDialog task={completing} busy={complete.isPending} onClose={() => setCompleting(null)}
         onConfirm={async (hours) => {
           await complete.mutateAsync({ id: completing.id, actualHours: hours })
+          celebrate()
+          toast('Nice work! One less thing in orbit.', { description: `${completing.title} · ${hours} h logged` })
           setCompleting(null)
         }} />
 

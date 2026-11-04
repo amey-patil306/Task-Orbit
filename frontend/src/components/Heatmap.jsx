@@ -20,17 +20,17 @@ export default function Heatmap({ rows }) {
       </div>
       <div className="mt-1.5 grid grid-cols-7 gap-1.5">
         {Array.from({ length: blanks }, (_, i) => <div key={`b${i}`} />)}
-        {rows.map((r) => {
+        {rows.map((r, i) => {
           const level = loadLevel(r.load_ratio)
           const empty = r.hours_required === 0
           return (
-            <div key={r.date} tabIndex={0}
-              className={`group relative flex aspect-square items-center justify-center rounded-md text-xs font-medium outline-none
+            <div key={r.date} tabIndex={0} style={{ '--i': i }}
+              className={`pop-seq group relative flex aspect-square cursor-default items-center justify-center rounded-lg text-xs font-semibold outline-none transition-transform duration-150 hover:z-10 hover:scale-110 hover:shadow-lg focus:z-10
                 focus-visible:ring-2 focus-visible:ring-indigo-500 ${empty ? 'bg-green-100 text-green-800' : `${LOAD_STYLES[level].cell} text-white`}
                 ${r.date === today ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`}>
               {Number(r.date.slice(8))}
               <div role="tooltip"
-                className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-40 -translate-x-1/2 rounded-lg bg-slate-900 p-2 text-left text-xs font-normal text-white shadow-lg group-hover:block group-focus:block">
+                className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-40 -translate-x-1/2 animate-fade-in rounded-lg bg-ink/95 p-2 backdrop-blur text-left text-xs font-normal text-white shadow-lg group-hover:block group-focus:block">
                 <p className="font-medium">{formatDay(r.date)}</p>
                 <p>{r.hours_required} h needed / {r.hours_available} h free</p>
                 <p className="text-slate-300">{LOAD_STYLES[level].label}{r.load_ratio != null && ` · ${Math.round(r.load_ratio * 100)}%`}</p>

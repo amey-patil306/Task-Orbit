@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import Icon from '../components/Icons'
 import { ConfirmDialog } from '../components/Modal'
+import { useToast } from '../components/Toast'
 import PageHeader from '../components/PageHeader'
 import { EmptyState, QueryState } from '../components/States'
 import { useAvailability, useSaveAvailability } from '../hooks/useAvailability'
@@ -12,6 +13,7 @@ import { WEEKDAYS } from '../lib/dates'
 
 function AvailabilityForm({ rows }) {
   const save = useSaveAvailability()
+  const toast = useToast()
   const [hours, setHours] = useState(() => rows.map((r) => String(r.hours)))
   const [saved, setSaved] = useState(false)
 
@@ -27,6 +29,7 @@ function AvailabilityForm({ rows }) {
     try {
       await save.mutateAsync(hours.map((h, weekday) => ({ weekday, hours: Number(h) })))
       setSaved(true)
+      toast('Study hours saved', { description: 'Your workload has been recalculated.' })
     } catch { /* shown below via save.isError */ }
   }
 
@@ -114,6 +117,7 @@ function SubjectRow({ subject, onDelete }) {
 function SubjectsSection() {
   const subjectsQuery = useSubjects()
   const { create, remove } = useSubjectMutations()
+  const toast = useToast()
   const [name, setName] = useState('')
   const [colour, setColour] = useState(SUBJECT_COLOURS[0])
   const [deleting, setDeleting] = useState(null)
@@ -124,6 +128,7 @@ function SubjectsSection() {
     try {
       await create.mutateAsync({ name: name.trim(), colour })
     } catch { return /* shown below via create.isError */ }
+    toast(`Added ${name.trim()}`)
     setName('')
     const used = (subjectsQuery.data?.length ?? 0) + 1
     setColour(SUBJECT_COLOURS[used % SUBJECT_COLOURS.length])
@@ -154,7 +159,7 @@ function SubjectsSection() {
 
       <ConfirmDialog open={Boolean(deleting)} title="Delete subject?" busy={remove.isPending}
         message={`"${deleting?.name}" will be removed. Its tasks are kept but will have no subject.`}
-        onConfirm={async () => { await remove.mutateAsync(deleting.id); setDeleting(null) }}
+        onConfirm={async () => { await remove.mutateAsync(deleting.id); toast(`Deleted ${deleting.name}`, { tone: 'info' }); setDeleting(null) }}
         onClose={() => setDeleting(null)} />
     </>
   )
@@ -173,7 +178,7 @@ export default function SettingsPage() {
           <p className="mt-1">Start by telling us how many hours you can study each day and adding your subjects. Then add your tasks.</p>
         </div>
       )}
-      <div className="space-y-6">
+      <div className="stagger space-y-6">
         <section className="card">
           <h2 className="font-semibold">Weekly availability</h2>
           <p className="mb-4 mt-1 text-sm text-slate-500">Hours you can realistically study on each day. Used to measure your load.</p>
