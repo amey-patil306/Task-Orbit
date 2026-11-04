@@ -330,7 +330,6 @@ Full metrics, confusion matrices, feature importances and figures are in
 ```
 Task-Orbit/
 ├── README.md                 ← this file
-├── CLAUDE.md                 # notes for AI coding assistants
 ├── docs/
 │   ├── SPEC.md               # original build guide (v1: student-only)
 │   └── PLAN_V2.md            # teacher + student pivot (wins where it differs from SPEC.md)
