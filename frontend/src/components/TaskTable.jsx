@@ -80,7 +80,7 @@ export default function TaskTable({ tasks, subjects, ...handlers }) {
                 </p>
                 <p className="mt-1 text-sm"><DueText task={t} /></p>
               </div>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[t.status]}`}>
+              <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[t.status]}`}>
                 {labelOf(TASK_STATUSES, t.status)}
               </span>
             </div>
@@ -125,7 +125,7 @@ export default function TaskTable({ tasks, subjects, ...handlers }) {
                 </td>
                 <td className="px-4 py-3 text-center tabular-nums">{t.priority}</td>
                 <td className="px-4 py-3">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[t.status]}`}>
+                  <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[t.status]}`}>
                     {labelOf(TASK_STATUSES, t.status)}
                   </span>
                 </td>

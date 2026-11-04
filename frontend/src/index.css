@@ -37,6 +37,10 @@
     @apply btn bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm shadow-indigo-500/30
       hover:from-indigo-500 hover:to-violet-500 hover:shadow-md hover:shadow-indigo-500/30;
   }
+  .role-teacher .btn-primary {
+    @apply from-emerald-600 to-teal-600 shadow-emerald-500/30 hover:from-emerald-500 hover:to-teal-500 hover:shadow-emerald-500/30
+      focus-visible:ring-emerald-500;
+  }
   .btn-secondary { @apply btn border border-slate-300 bg-surface text-slate-700 hover:border-slate-400 hover:bg-slate-50; }
   .btn-danger { @apply btn bg-red-600 text-white shadow-sm shadow-red-500/30 hover:bg-red-500; }
   .btn-ghost { @apply btn px-2 py-1 font-medium text-slate-600 hover:bg-slate-100; }

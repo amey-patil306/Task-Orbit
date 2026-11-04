@@ -33,6 +33,11 @@ export default function Layout() {
   const isTeacher = user?.role === 'teacher'
   // A new page starts at the top (the layout stays mounted, so the browser wouldn't reset it).
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
+  // Teacher pages use the emerald accent for primary buttons too (on <html>, so portalled modals get it).
+  useEffect(() => {
+    document.documentElement.classList.toggle('role-teacher', isTeacher)
+    return () => document.documentElement.classList.remove('role-teacher')
+  }, [isTeacher])
   const navItems = isTeacher ? TEACHER_NAV : STUDENT_NAV
   const mobileItems = navItems.filter((i) => !i.desktopOnly)
   const tone = isTeacher ? 'emerald' : 'indigo'
