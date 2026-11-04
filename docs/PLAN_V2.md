@@ -37,6 +37,9 @@ given the same class.** v2 attacks the problem at both ends:
 | Student | Register as student, join classes with a 6-character **class code** from the teacher | Student dashboard (v1 screens + classes, extension requests, stress check-in) |
 | Teacher | Register as teacher with the college's **teacher signup code** (env `TEACHER_SIGNUP_CODE`), so students cannot pose as teachers | Teacher dashboard: classes, assignments, deadline advisor, analytics, extension inbox |
 
+Login has a **"Log in as" dropdown** (Student / Teacher). `POST /api/auth/login` takes an optional
+`role`; if it does not match the account, it returns 403 `wrong_role` ("This is a teacher account…").
+
 Privacy rule: teachers see a student's tasks from **their own classes** in full. Work from other
 subjects is shown as **aggregate hours and deadline titles of other teachers' assignments only**.
 Students' personal tasks are never shown to teachers, only counted in total hours.

@@ -1,12 +1,18 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { errorMessage } from '../api/client'
 import Icon from './Icons'
 
 export default function Modal({ open, title, onClose, children, footer, size = 'max-w-lg' }) {
   const panelRef = useRef(null)
+  // Callers pass a new onClose arrow on every render. Keep it in a ref so the effect below runs
+  // only when the modal opens or closes; otherwise any parent re-render (a background refetch,
+  // a button going "Saving…") would yank focus back to the first field while the user types.
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     if (!open) return
-    const onKey = (e) => e.key === 'Escape' && onClose()
+    const onKey = (e) => e.key === 'Escape' && onCloseRef.current()
     document.addEventListener('keydown', onKey)
     const previous = document.activeElement
     panelRef.current?.querySelector('input, select, textarea, button')?.focus()
@@ -14,7 +20,7 @@ export default function Modal({ open, title, onClose, children, footer, size = '
       document.removeEventListener('keydown', onKey)
       previous?.focus?.()
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
   return (
@@ -35,19 +41,32 @@ export default function Modal({ open, title, onClose, children, footer, size = '
   )
 }
 
-/** In-app confirm dialog (never window.confirm). */
+/** In-app confirm dialog (never window.confirm). If onConfirm fails, the error is shown in the dialog. */
 export function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', busy, onConfirm, onClose }) {
+  const [error, setError] = useState(null)
+  useEffect(() => { if (open) setError(null) }, [open])
+
+  const confirm = async () => {
+    setError(null)
+    try {
+      await onConfirm()
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
   return (
     <Modal open={open} title={title} onClose={onClose} size="max-w-sm"
       footer={
         <>
           <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn-danger" disabled={busy} onClick={onConfirm}>
+          <button type="button" className="btn-danger" disabled={busy} onClick={confirm}>
             {busy ? 'Working…' : confirmLabel}
           </button>
         </>
       }>
       <p className="text-sm text-slate-600">{message}</p>
+      {error && <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     </Modal>
   )
 }

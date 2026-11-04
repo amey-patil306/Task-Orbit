@@ -26,6 +26,7 @@ class LoginIn(BaseModel):
 
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
+    role: Literal["student", "teacher"] | None = None  # "log in as" choice on the login page
 
     @field_validator("email")
     @classmethod

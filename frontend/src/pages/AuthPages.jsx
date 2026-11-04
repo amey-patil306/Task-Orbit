@@ -45,7 +45,10 @@ export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm()
+  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm({
+    // Coming back from a teacher page? Pre-select "Teacher".
+    defaultValues: { role: location.state?.from?.pathname?.startsWith('/teacher') ? 'teacher' : 'student' },
+  })
   const showServerErrors = useServerErrors(setError)
 
   const onSubmit = async (values) => {
@@ -56,7 +59,9 @@ export function LoginPage() {
       const sameArea = from && from.startsWith('/teacher') === (user.role === 'teacher')
       navigate(sameArea ? from : homeFor(user), { replace: true })
     } catch (err) {
-      showServerErrors(err, ['email', 'password'])
+      // A role mismatch reads better as one message at the top than under the dropdown.
+      if (err?.response?.data?.error?.code === 'wrong_role') setError('root', { message: errorMessage(err) })
+      else showServerErrors(err, ['email', 'password', 'role'])
     }
   }
 
@@ -65,6 +70,14 @@ export function LoginPage() {
       footer={<>New here? <Link to="/register" className="font-medium text-indigo-600 hover:underline">Create an account</Link></>}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {errors.root && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{errors.root.message}</p>}
+        <div>
+          <label className="label" htmlFor="role">Log in as</label>
+          <select id="role" className={`input ${errors.role ? 'input-error' : ''}`} {...register('role')}>
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+          {errors.role && <p className="field-error">{errors.role.message}</p>}
+        </div>
         <div>
           <label className="label" htmlFor="email">Email</label>
           <input id="email" type="email" autoComplete="email" className={`input ${errors.email ? 'input-error' : ''}`}

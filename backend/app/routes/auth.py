@@ -41,6 +41,9 @@ def login():
     user = db.session.scalar(db.select(User).where(User.email == data.email))
     if user is None or not user.check_password(data.password):
         raise ApiError(401, "invalid_credentials", "Email or password is incorrect")
+    if data.role and data.role != user.role:
+        raise ApiError(403, "wrong_role", f"This is a {user.role} account. Choose \"{user.role.title()}\" to log in.",
+                       {"role": f"this account is a {user.role}"})
     return jsonify(_auth_payload(user))
 
 

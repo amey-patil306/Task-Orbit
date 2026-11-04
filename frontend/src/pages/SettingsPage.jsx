@@ -24,8 +24,10 @@ function AvailabilityForm({ rows }) {
     e.preventDefault()
     if (invalid.some(Boolean)) return
     setSaved(false)
-    await save.mutateAsync(hours.map((h, weekday) => ({ weekday, hours: Number(h) })))
-    setSaved(true)
+    try {
+      await save.mutateAsync(hours.map((h, weekday) => ({ weekday, hours: Number(h) })))
+      setSaved(true)
+    } catch { /* shown below via save.isError */ }
   }
 
   return (
@@ -77,8 +79,10 @@ function SubjectRow({ subject, onDelete }) {
   const save = async (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    await update.mutateAsync({ id: subject.id, body: { name: name.trim(), colour } })
-    setEditing(false)
+    try {
+      await update.mutateAsync({ id: subject.id, body: { name: name.trim(), colour } })
+      setEditing(false)
+    } catch { /* shown below via update.isError */ }
   }
 
   if (editing) {
@@ -117,7 +121,9 @@ function SubjectsSection() {
   const add = async (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    await create.mutateAsync({ name: name.trim(), colour })
+    try {
+      await create.mutateAsync({ name: name.trim(), colour })
+    } catch { return /* shown below via create.isError */ }
     setName('')
     const used = (subjectsQuery.data?.length ?? 0) + 1
     setColour(SUBJECT_COLOURS[used % SUBJECT_COLOURS.length])

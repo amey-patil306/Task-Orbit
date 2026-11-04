@@ -33,7 +33,10 @@ function JoinForm() {
       setJoined(c)
       setCode('')
     } catch (err) {
-      setError(fieldErrors(err).code ?? errorMessage(err))
+      // e.g. "No class with that code. Check the code with your teacher."
+      const hint = fieldErrors(err).code
+      const message = errorMessage(err)
+      setError(hint && !hint.startsWith('already') ? `${message}. ${hint[0].toUpperCase()}${hint.slice(1)}.` : message)
     }
   }
 

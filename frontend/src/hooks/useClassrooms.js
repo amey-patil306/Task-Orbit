@@ -19,7 +19,7 @@ function useInvalidating(mutationFn, keys) {
 }
 
 export const useJoinClass = () => useInvalidating(classroomsApi.join, ['classrooms', ...TASK_KEYS])
-export const useLeaveClass = () => useInvalidating(classroomsApi.leave, ['classrooms', ...TASK_KEYS])
+export const useLeaveClass = () => useInvalidating(classroomsApi.leave, ['classrooms', 'extensions', ...TASK_KEYS])
 export const useRequestExtension = () =>
   useInvalidating(({ taskId, body }) => classroomsApi.requestExtension(taskId, body), ['extensions'])
 export const useSaveCheckin = () => useInvalidating(classroomsApi.saveCheckin, ['checkins'])

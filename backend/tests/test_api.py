@@ -71,6 +71,16 @@ def test_login_success_and_failure(client, register):
     assert_error(unknown, 401, "invalid_credentials")
 
 
+def test_login_as_role(client, register):
+    register()  # a student account
+    creds = {"email": "asha@example.com", "password": "password123"}
+    assert client.post("/api/auth/login", json={**creds, "role": "student"}).status_code == 200
+    assert_error(client.post("/api/auth/login", json={**creds, "role": "teacher"}), 403, "wrong_role")
+    # Wrong password is still reported as bad credentials, whatever the role.
+    bad = client.post("/api/auth/login", json={**creds, "password": "wrong-pass", "role": "teacher"})
+    assert_error(bad, 401, "invalid_credentials")
+
+
 def test_me(client, register):
     headers, user = register()
     res = client.get("/api/auth/me", headers=headers)
